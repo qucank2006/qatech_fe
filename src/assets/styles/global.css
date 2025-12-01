@@ -1,0 +1,21 @@
+/* Global Styles */
+body {
+  @apply bg-neutral-950 text-neutral-100;
+}
+
+
+
+@keyframes fadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fadeUp 0.8s ease-out forwards;
+}
