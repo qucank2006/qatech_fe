@@ -21,7 +21,7 @@
 //            Phật phù hộ, không bao giờ BUG
 //     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";    
 import LogoLoop from "../components/LogoLoop";
 import FadeContent from "../components/FadeContent";
 import { techLogos } from "../data/logos";
@@ -33,23 +33,40 @@ export default function Home() {
   return (
     <div className="w-full flex flex-col items-center text-center">
       
-      {/* HERO SECTION */}
-      
-      <section className="min-h-[85vh] flex flex-col justify-center items-center px-4">
+      {/* MỞ ĐẦU  */}
+      <section
+        className="
+          relative w-full min-h-[85vh] flex flex-col justify-center items-center px-4
+          bg-gradient-to-b from-[#0a0a0a] via-[#0b0d20] to-black
+          -mt-[65px] pt-[65px]
+        "
+      >
+        {/* Noise overlay */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.08] bg-[url('/noise.png')]"></div>
+
+        {/* Glow blob */}
+        <div className="
+          absolute top-1/3 left-1/2 -translate-x-1/2
+          w-[600px] h-[600px] rounded-full
+          bg-[radial-gradient(circle,rgba(0,140,255,0.35),transparent_70%)]
+          blur-3xl opacity-60
+    ">
+        </div>
+
         <FadeContent blur={true} duration={1000} easing="ease-out" initialOpacity={0}>
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-500 to-cyan-400 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-400 to-cyan-300 bg-clip-text text-transparent">
             Chào mừng đến với QATech
           </h1>
         </FadeContent>
 
         <FadeContent blur={false} duration={1000} easing="ease-out" initialOpacity={0} delay={400}>
-          <p className="text-xl text-neutral-400 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-neutral-300 mb-8 max-w-2xl mx-auto">
             Nền tảng mua sắm công nghệ hiện đại, tối ưu trải nghiệm và mang đến
             những sản phẩm chất lượng từ các thương hiệu hàng đầu thế giới.
           </p>
         </FadeContent>
-        
-        <FadeContent blur={false} duration={1000} easing="ease-out" initialOpacity={0} delay={600}>
+
+        <FadeContent blur={false} duration={1000} easing="ease-out" initialOpacity={0} delay={800}>
           <div className="flex gap-4 justify-center">
             <Link 
               to="/products"
