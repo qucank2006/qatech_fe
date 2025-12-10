@@ -6,7 +6,7 @@ import FadeContent from '../components/FadeContent';
 const VerifyOtp = () => {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState(null);
-
+  
   const navigate = useNavigate();
   const email = localStorage.getItem("resetEmail");
 

@@ -22,6 +22,8 @@
 //     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 import React from "react";
 import { Link } from "react-router-dom";    
+import { useSelector } from "react-redux";
+import ProductCard from "../components/ProductCard";
 import LogoLoop from "../components/LogoLoop";
 import FadeContent from "../components/FadeContent";
 import { techLogos } from "../data/logos";
@@ -29,11 +31,52 @@ import StoreCarousel from "../components/StoreCarousel";
 import { storeImages } from "../data/storeImg";
 import { LuTruck, LuShieldCheck, LuHeadphones } from "react-icons/lu";
 
+const featuredProducts = [
+  {
+    id: 1,
+    name: "MacBook Pro 14 M3 8CPU 10GPU 8GB 512GB",
+    price: 39990000,
+    oldPrice: 42990000,
+    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1000&auto=format&fit=crop",
+    specs: { cpu: "M3", ram: "8GB", ssd: "512GB", screen: "14.2\"" },
+    tags: ["Mới", "Giảm 3%"]
+  },
+  {
+    id: 2,
+    name: "Asus ROG Zephyrus G14 Ryzen 9 7940HS RTX 4060",
+    price: 45990000,
+    oldPrice: 49990000,
+    image: "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?q=80&w=1000&auto=format&fit=crop",
+    specs: { cpu: "R9 7940HS", ram: "16GB", ssd: "1TB", screen: "14\" 165Hz" },
+    tags: ["Gaming", "Hot"]
+  },
+  {
+    id: 3,
+    name: "Dell XPS 13 Plus i7 1360P 16GB 512GB OLED",
+    price: 52990000,
+    oldPrice: 55990000,
+    image: "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?q=80&w=1000&auto=format&fit=crop",
+    specs: { cpu: "i7 1360P", ram: "16GB", ssd: "512GB", screen: "13.4\" OLED" },
+    tags: ["Sang trọng"]
+  },
+  {
+    id: 4,
+    name: "Lenovo Legion 5 Pro i7 13700HX RTX 4060",
+    price: 38990000,
+    oldPrice: 41990000,
+    image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?q=80&w=1000&auto=format&fit=crop",
+    specs: { cpu: "i7 13700HX", ram: "16GB", ssd: "512GB", screen: "16\" 2K" },
+    tags: ["Best Seller"]
+  }
+];
+
 export default function Home() {
+  const { isAuthenticated } = useSelector((state) => state.auth);
+
   return (
     <div className="w-full flex flex-col items-center text-center">
       
-      {/* MỞ ĐẦU  */}
+      {/* HERO SECTION */}
       <section
         className="
           relative w-full min-h-[85vh] flex flex-col justify-center items-center px-4
@@ -75,12 +118,14 @@ export default function Home() {
               Mua ngay
             </Link>
 
-            <Link 
-              to="/register"
-              className="bg-neutral-800 hover:bg-neutral-700 text-white px-8 py-3 rounded-xl font-semibold transition border border-neutral-700"
-            >
-              Đăng ký
-            </Link>
+            {!isAuthenticated && (
+              <Link 
+                to="/register"
+                className="bg-neutral-800 hover:bg-neutral-700 text-white px-8 py-3 rounded-xl font-semibold transition border border-neutral-700"
+              >
+                Đăng ký
+              </Link>
+            )}
           </div>
         </FadeContent>
       </section>
@@ -143,32 +188,13 @@ export default function Home() {
       {/*FEATURED PRODUCTS*/}
       <section className="max-w-6xl mx-auto py-20 px-6">
         <FadeContent blur={false}>
-          <h2 className="text-3xl font-bold mb-12">Sản phẩm nổi bật (sau code BE gọi API)</h2>
+          <h2 className="text-3xl font-bold mb-12">Sản phẩm nổi bật</h2>
         </FadeContent>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-
-          {[1, 2, 3, 4].map((_, i) => (
-            <FadeContent key={i} delay={i * 350} blur={true}>
-              <div 
-                className="bg-[#111] border border-neutral-800 rounded-2xl p-4 hover:border-indigo-500/40 hover:shadow-lg hover:shadow-indigo-500/10 transition cursor-pointer h-full"
-              >
-                <div className="w-full h-40 bg-neutral-900 rounded-xl mb-4 flex items-center justify-center">
-                  <p className="text-neutral-600 text-sm">Ảnh sản phẩm</p>
-                </div>
-
-                <h3 className="text-lg font-semibold mb-2">Sản phẩm {i + 1}</h3>
-                <p className="text-neutral-400 text-sm mb-3">
-                  Mô tả ngắn gọn về sản phẩm. Tương thích mọi nhu cầu của bạn.
-                </p>
-
-                <div className="flex justify-between items-center mt-auto">
-                  <span className="text-indigo-400 font-semibold">25.000.000₫</span>
-                  <button className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm">
-                    Xem ngay
-                  </button>
-                </div>
-              </div>
+          {featuredProducts.map((product, i) => (
+            <FadeContent key={product.id} delay={i * 100} blur={true}>
+              <ProductCard product={product} />
             </FadeContent>
           ))}
         </div>

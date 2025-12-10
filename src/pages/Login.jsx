@@ -39,7 +39,7 @@ const Login = () => {
 
     navigate('/');
   } catch (err) {
-    const errorMessage = err.response?.data?.msg || 'Login failed. Please try again.';
+    const errorMessage = err.response?.data?.msg || 'Đăng nhập thất bại! vui lòng thử lại.';
     dispatch(loginFailure(errorMessage));
   }
 };
