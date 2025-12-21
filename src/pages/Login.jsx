@@ -5,6 +5,7 @@ import { loginStart, loginSuccess, loginFailure } from '../redux/slices/authSlic
 import api from '../services/api';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import FadeContent from '../components/FadeContent';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -37,6 +38,7 @@ const Login = () => {
       user: response.data.user
     }));
 
+    toast.success("Đăng nhập thành công!");
     navigate('/');
   } catch (err) {
     const errorMessage = err.response?.data?.msg || 'Login failed. Please try again.';

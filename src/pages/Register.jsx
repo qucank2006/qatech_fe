@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import FadeContent from '../components/FadeContent';
+import toast from 'react-hot-toast';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -26,7 +27,7 @@ const Register = () => {
     setError(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setError("Mật khẩu không khớp");
       return;
     }
 
@@ -40,10 +41,11 @@ const Register = () => {
         password: formData.password,
       });
       
+      toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
       // Redirect to login on success
       navigate('/login');
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
+      const errorMessage = err.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
       setError(errorMessage);
     } finally {
       setLoading(false);

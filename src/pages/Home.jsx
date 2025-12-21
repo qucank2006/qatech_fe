@@ -20,8 +20,11 @@
 //     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //            Phật phù hộ, không bao giờ BUG
 //     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchProducts } from "../redux/slices/productSlice";
+import ProductCard from "../components/ProductCard";
 import LogoLoop from "../components/LogoLoop";
 import FadeContent from "../components/FadeContent";
 import { techLogos } from "../data/logos";
@@ -30,26 +33,53 @@ import { storeImages } from "../data/storeImg";
 import { LuTruck, LuShieldCheck, LuHeadphones } from "react-icons/lu";
 
 export default function Home() {
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { items: products, status } = useSelector((state) => state.products);
+
+  useEffect(() => {
+    if (status === 'idle') {
+      dispatch(fetchProducts());
+    }
+  }, [status, dispatch]);
+
   return (
     <div className="w-full flex flex-col items-center text-center">
       
       {/* HERO SECTION */}
-      
-      <section className="min-h-[85vh] flex flex-col justify-center items-center px-4">
+      <section
+        className="
+          relative w-full min-h-[85vh] flex flex-col justify-center items-center px-4
+          bg-gradient-to-b from-[#0a0a0a] via-[#0b0d20] to-black
+          -mt-[65px] pt-[65px]
+        "
+      >
+        {/* Noise overlay */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.08] bg-[url('/noise.png')]"></div>
+
+        {/* Glow blob */}
+        <div className="
+          absolute top-1/3 left-1/2 -translate-x-1/2
+          w-[600px] h-[600px] rounded-full
+          bg-[radial-gradient(circle,rgba(0,140,255,0.35),transparent_70%)]
+          blur-3xl opacity-60
+    ">
+        </div>
+
         <FadeContent blur={true} duration={1000} easing="ease-out" initialOpacity={0}>
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-500 to-cyan-400 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-400 to-cyan-300 bg-clip-text text-transparent">
             Chào mừng đến với QATech
           </h1>
         </FadeContent>
 
         <FadeContent blur={false} duration={1000} easing="ease-out" initialOpacity={0} delay={400}>
-          <p className="text-xl text-neutral-400 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-neutral-300 mb-8 max-w-2xl mx-auto">
             Nền tảng mua sắm công nghệ hiện đại, tối ưu trải nghiệm và mang đến
             những sản phẩm chất lượng từ các thương hiệu hàng đầu thế giới.
           </p>
         </FadeContent>
-        
-        <FadeContent blur={false} duration={1000} easing="ease-out" initialOpacity={0} delay={600}>
+
+        <FadeContent blur={false} duration={1000} easing="ease-out" initialOpacity={0} delay={800}>
           <div className="flex gap-4 justify-center">
             <Link 
               to="/products"
@@ -58,16 +88,17 @@ export default function Home() {
               Mua ngay
             </Link>
 
-            <Link 
-              to="/register"
-              className="bg-neutral-800 hover:bg-neutral-700 text-white px-8 py-3 rounded-xl font-semibold transition border border-neutral-700"
-            >
-              Đăng ký
-            </Link>
+            {!isAuthenticated && (
+              <Link 
+                to="/register"
+                className="bg-neutral-800 hover:bg-neutral-700 text-white px-8 py-3 rounded-xl font-semibold transition border border-neutral-700"
+              >
+                Đăng ký
+              </Link>
+            )}
           </div>
         </FadeContent>
       </section>
-      
 
       {/* ABOUT SECTION */}
       <section className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 px-6 py-20 text-left">
@@ -126,34 +157,19 @@ export default function Home() {
       {/*FEATURED PRODUCTS*/}
       <section className="max-w-6xl mx-auto py-20 px-6">
         <FadeContent blur={false}>
-          <h2 className="text-3xl font-bold mb-12">Sản phẩm nổi bật (sau code BE gọi API)</h2>
+          <h2 className="text-3xl font-bold mb-12">Sản phẩm nổi bật</h2>
         </FadeContent>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-
-          {[1, 2, 3, 4].map((_, i) => (
-            <FadeContent key={i} delay={i * 350} blur={true}>
-              <div 
-                className="bg-[#111] border border-neutral-800 rounded-2xl p-4 hover:border-indigo-500/40 hover:shadow-lg hover:shadow-indigo-500/10 transition cursor-pointer h-full"
-              >
-                <div className="w-full h-40 bg-neutral-900 rounded-xl mb-4 flex items-center justify-center">
-                  <p className="text-neutral-600 text-sm">Ảnh sản phẩm</p>
-                </div>
-
-                <h3 className="text-lg font-semibold mb-2">Sản phẩm {i + 1}</h3>
-                <p className="text-neutral-400 text-sm mb-3">
-                  Mô tả ngắn gọn về sản phẩm. Tương thích mọi nhu cầu của bạn.
-                </p>
-
-                <div className="flex justify-between items-center mt-auto">
-                  <span className="text-indigo-400 font-semibold">25.000.000₫</span>
-                  <button className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm">
-                    Xem ngay
-                  </button>
-                </div>
-              </div>
-            </FadeContent>
-          ))}
+          {products && products.length > 0 ? (
+            products.slice(0, 4).map((product, i) => (
+              <FadeContent key={product.id || i} delay={i * 100} blur={true}>
+                <ProductCard product={product} />
+              </FadeContent>
+            ))
+          ) : (
+            <p className="text-neutral-400 col-span-full text-center">Đang cập nhật sản phẩm...</p>
+          )}
         </div>
       </section>
       {/* CUSTOMER REVIEWS */}
@@ -166,7 +182,7 @@ export default function Home() {
 
           {[
             {
-              name: "Trần Lê Quốc Anh",
+              name: "Lê Đức Hải",
               review: "Dịch vụ quá tuyệt! Laptop nhận nhanh, đóng gói kỹ và đúng như mô tả.",
             },
             {
@@ -174,7 +190,7 @@ export default function Home() {
               review: "Nhân viên tư vấn rất nhiệt tình, giúp mình chọn đúng chiếc PC phù hợp.",
             },
             {
-              name: "Nguyễn Thị Ánh Tuyết",
+              name: "Tô Văn Hiền",
               review: "Giá tốt, sản phẩm chính hãng. Sẽ ủng hộ thêm!",
             },
           ].map((item, i) => (

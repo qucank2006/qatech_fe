@@ -1,5 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom';
 import App from '../App';
+import MainLayout from '../layouts/MainLayout';
+import AdminLayout from '../layouts/AdminLayout';
+
 import Home from '../pages/Home';
 import Products from '../pages/Products';
 import ProductDetail from '../pages/ProductDetail';
@@ -11,6 +14,7 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import ForgotPassword from '../pages/ForgotPassword';
 import VerifyOTP from '../pages/VerifyOTP';
 import ResetPassword from '../pages/ResetPassword';
+import Profile from '../pages/Profile';
 
 
 // Admin Pages
@@ -24,67 +28,88 @@ const router = createBrowserRouter([
     path: '/',
     element: <App />,
     children: [
+      // Public Routes wrapped in MainLayout
       {
-        index: true,
-        element: <Home />,
+        element: <MainLayout />,
+        children: [
+          {
+            index: true,
+            element: <Home />,
+          },
+          {
+            path: 'products',
+            element: <Products />,
+          },
+          {
+            path: 'product/:id',
+            element: <ProductDetail />,
+          },
+          {
+            path: 'cart',
+            element: <Cart />,
+          },
+          {
+            path: 'checkout',
+            element: <Checkout />,
+          },
+          {
+            path: 'login',
+            element: <Login />,
+          },
+          {
+            path: 'register',
+            element: <Register />,
+          },
+          {
+            path: 'forgot-password',
+            element: <ForgotPassword />,
+          },
+          {
+            path: 'verify-otp',
+            element: <VerifyOTP />,
+          },
+          {
+            path: 'reset-password',
+            element: <ResetPassword />,
+          },
+          {
+            element: <ProtectedRoute />,
+            children: [
+              {
+                path: 'profile',
+                element: <Profile />,
+              }
+            ]
+          }
+        ]
       },
-      {
-        path: 'products',
-        element: <Products />,
-      },
-      {
-        path: 'product/:id',
-        element: <ProductDetail />,
-      },
-      {
-        path: 'cart',
-        element: <Cart />,
-      },
-      {
-        path: 'checkout',
-        element: <Checkout />,
-      },
-      {
-        path: 'login',
-        element: <Login />,
-      },
-      {
-        path: 'register',
-        element: <Register />,
-      },
-      {
-        path: 'forgot-password',
-        element: <ForgotPassword />,
-      },
-      {
-        path: 'verify-otp',
-        element: <VerifyOTP />,
-      },
-      {
-        path: 'reset-password',
-        element: <ResetPassword />,
-      },
-      // Admin Routes
+      
+      // Admin Routes wrapped in AdminLayout
       {
         path: 'admin',
         element: <ProtectedRoute adminOnly={true} />,
         children: [
           {
-            path: 'dashboard',
-            element: <Dashboard />,
-          },
-          {
-            path: 'products',
-            element: <AdminProducts />,
-          },
-          {
-            path: 'orders',
-            element: <Orders />,
-          },
-          {
-            path: 'users',
-            element: <Users />,
-          },
+            element: <AdminLayout />,
+            children: [
+              {
+                path: 'dashboard',
+                element: <Dashboard />,
+              },
+              {
+                path: 'products',
+                element: <AdminProducts />,
+              },
+              {
+                path: 'orders',
+                element: <Orders />,
+              },
+              {
+                path: 'users',
+                element: <Users />,
+              },
+            ]
+          }
         ],
       },
     ],
