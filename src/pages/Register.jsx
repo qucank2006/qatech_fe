@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
-import FadeContent from '../components/FadeContent';
 import toast from 'react-hot-toast';
 
+/**
+ * Trang đăng ký (Register Page)
+ * Cho phép người dùng tạo tài khoản mới
+ */
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -18,14 +21,17 @@ const Register = () => {
   
   const navigate = useNavigate();
 
+  // Xử lý thay đổi input
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Xử lý submit form đăng ký
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
+    // Kiểm tra mật khẩu khớp
     if (formData.password !== formData.confirmPassword) {
       setError("Mật khẩu không khớp");
       return;
@@ -34,7 +40,6 @@ const Register = () => {
     setLoading(true);
     
     try {
-      // Assuming the API endpoint is /auth/register
       await api.post('/auth/register', {
         name: formData.name,
         email: formData.email,
@@ -42,7 +47,6 @@ const Register = () => {
       });
       
       toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
-      // Redirect to login on success
       navigate('/login');
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
@@ -54,8 +58,8 @@ const Register = () => {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative overflow-hidden">
-      <FadeContent blur duration={800}>
-        <div className="bg-[#111] border border-neutral-800 p-8 rounded-2xl shadow-2xl shadow-indigo-500/10 w-full max-w-xl relative z-10">
+      <div className="w-full flex justify-center">
+        <div className="bg-[#111] border border-neutral-800 p-8 rounded-2xl shadow-2xl shadow-indigo-500/10 w-full max-w-md relative z-10">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-500 to-cyan-400 bg-clip-text text-transparent mb-2">Tạo tài khoản</h1>
             <p className="text-neutral-400 text-sm">Tham gia QATech ngay hôm nay</p>
@@ -168,7 +172,7 @@ const Register = () => {
             </Link>
           </div>
         </div>
-      </FadeContent>
+      </div>
     </div>
   );
 };

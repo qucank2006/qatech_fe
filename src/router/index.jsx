@@ -16,19 +16,21 @@ import VerifyOTP from '../pages/VerifyOTP';
 import ResetPassword from '../pages/ResetPassword';
 import Profile from '../pages/Profile';
 
-
-// Admin Pages
 import Dashboard from '../pages/admin/Dashboard';
 import AdminProducts from '../pages/admin/Products';
 import Orders from '../pages/admin/Orders';
 import Users from '../pages/admin/Users';
 
+/**
+ * Router Configuration - Cấu hình các route của ứng dụng
+ * Bao gồm: Public routes (MainLayout), Protected routes, Admin routes (AdminLayout)
+ */
 const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
     children: [
-      // Public Routes wrapped in MainLayout
+      // Các route công khai sử dụng MainLayout
       {
         element: <MainLayout />,
         children: [
@@ -41,7 +43,7 @@ const router = createBrowserRouter([
             element: <Products />,
           },
           {
-            path: 'product/:id',
+            path: 'product/:slug',
             element: <ProductDetail />,
           },
           {
@@ -84,7 +86,7 @@ const router = createBrowserRouter([
         ]
       },
       
-      // Admin Routes wrapped in AdminLayout
+      // Các route admin yêu cầu quyền admin (sử dụng AdminLayout)
       {
         path: 'admin',
         element: <ProtectedRoute adminOnly={true} />,

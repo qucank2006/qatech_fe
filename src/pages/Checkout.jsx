@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { LuMapPin, LuPhone, LuMail, LuUser, LuCreditCard, LuBanknote, LuCheck } from "react-icons/lu";
+import { getImageUrl } from "../utils/imageUrl";
 
 const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState('cod');
@@ -246,7 +247,7 @@ const Checkout = () => {
               {cartItems.map((item) => (
                 <div key={item.id} className="flex gap-3">
                   <div className="w-16 h-16 bg-neutral-900 rounded-lg overflow-hidden shrink-0">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm text-white font-medium truncate">{item.name}</h4>

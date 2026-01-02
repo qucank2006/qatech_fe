@@ -4,34 +4,45 @@ import { useDispatch, useSelector } from 'react-redux';
 import { loginStart, loginSuccess, loginFailure } from '../redux/slices/authSlice';
 import api from '../services/api';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
-import FadeContent from '../components/FadeContent';
 import toast from 'react-hot-toast';
 
+/**
+ * Trang đăng nhập (Login Page)
+ * Cho phép người dùng đăng nhập vào hệ thống
+ */
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
 
+  // Xử lý thay đổi input
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Xử lý submit form đăng nhập
   const handleSubmit = async (e) => {
   e.preventDefault();
   dispatch(loginStart());
 
   try {
-    const response = await api.post('/auth/login', formData);
+    const response = await api.post('/auth/login', { ...formData, remember });
 
-    // Save token + user
-    localStorage.setItem("token", response.data.token);
-    localStorage.setItem("user", JSON.stringify(response.data.user));
+    // Lưu token và thông tin user tùy theo lựa chọn ghi nhớ
+    if (remember) {
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+    } else {
+      sessionStorage.setItem("token", response.data.token);
+      sessionStorage.setItem("user", JSON.stringify(response.data.user));
+    }
 
     dispatch(loginSuccess({
       token: response.data.token,
@@ -49,8 +60,8 @@ const Login = () => {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 relative overflow-hidden">
-      <FadeContent blur duration={800}>
-        <div className="bg-[#111] border border-neutral-800 p-8 rounded-2xl shadow-2xl shadow-indigo-500/10 w-full max-w-xl relative z-10">
+      <div className="w-full flex justify-center">
+        <div className="bg-[#111] border border-neutral-800 p-8 rounded-2xl shadow-2xl shadow-indigo-500/10 w-full max-w-md relative z-10">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-500 to-cyan-400 bg-clip-text text-transparent mb-2">Chào mừng trở lại</h1>
             <p className="text-neutral-400 text-sm">Đăng nhập để tiếp tục đến QATech</p>
@@ -104,7 +115,11 @@ const Login = () => {
 
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center text-neutral-400 hover:text-neutral-300 cursor-pointer">
-                <input type="checkbox" className="mr-2 rounded bg-neutral-800 border-neutral-700 text-indigo-500 
+                <input 
+                  type="checkbox" 
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="mr-2 rounded bg-neutral-800 border-neutral-700 text-indigo-500 
                                                   focus:ring-indigo-500 focus:ring-offset-neutral-900" />
                 Ghi nhớ đăng nhập
               </label>
@@ -139,7 +154,7 @@ const Login = () => {
             </Link>
           </div>
         </div>
-      </FadeContent>
+      </div>
     </div>
   );
 };

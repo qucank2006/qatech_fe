@@ -1,12 +1,16 @@
 import { Link } from "react-router-dom";
 import { FaFacebookF, FaInstagram, FaYoutube } from "react-icons/fa";
 
+/**
+ * Component Footer - Phần chân trang của website
+ * Hiển thị thông tin giới thiệu, liên kết nhanh, mạng xã hội và đăng ký nhận tin
+ */
 export default function Footer() {
   return (
     <footer className="w-full border-t border-neutral-800 bg-black mt-20">
       <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-4 gap-12">
 
-        {/* CỘT 1 — GIỚI THIỆU */}
+        {/* Cột 1 - Giới thiệu công ty */}
         <div>
           <h2 className="text-2xl font-semibold mb-4">QATech</h2>
           <p className="text-neutral-400 leading-relaxed">
@@ -15,7 +19,7 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* CỘT 2 — LIÊN KẾT NHANH */}
+        {/* Cột 2 - Liên kết nhanh */}
         <div>
           <h3 className="text-xl font-semibold mb-4">Liên kết nhanh</h3>
           <ul className="space-y-2 text-neutral-400">
@@ -26,7 +30,7 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* CỘT 3 — KẾT NỐI */}
+        {/* Cột 3 - Kết nối mạng xã hội */}
         <div>
           <h3 className="text-xl font-semibold mb-4">Kết nối với chúng tôi</h3>
           <div className="flex gap-4 text-neutral-300 text-2xl">
@@ -36,7 +40,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* CỘT 4 — NEWSLETTER */}
+        {/* Cột 4 - Đăng ký nhận tin */}
         <div>
           <h3 className="text-xl font-semibold mb-4">Đăng ký nhận bản tin</h3>
           <p className="text-neutral-400 mb-3 text-sm">
@@ -61,7 +65,7 @@ export default function Footer() {
 
       </div>
 
-      {/* COPYRIGHT */}
+      {/* Thông tin bản quyền */}
       <div className="text-center py-6 text-neutral-600 border-t border-neutral-900 text-sm">
         © 2025 QATech. All rights reserved.
       </div>

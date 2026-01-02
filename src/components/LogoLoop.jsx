@@ -1,15 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 
+/**
+ * Component LogoLoop - Hiển thị vòng lặp logo cuộn tự động
+ * Hỗ trợ cuộn ngang/dọc, tốc độ tùy chỉnh, hover effects
+ */
+
+// Cấu hình animation
 const ANIMATION_CONFIG = {
   SMOOTH_TAU: 0.25,
   MIN_COPIES: 2,
   COPY_HEADROOM: 2
 };
 
+// Chuyển đổi giá trị thành CSS length
 const toCssLength = value => (typeof value === 'number' ? `${value}px` : (value ?? undefined));
 
+// Kết hợp các class CSS
 const cx = (...parts) => parts.filter(Boolean).join(' ');
 
+// Hook theo dõi thay đổi kích thước phần tử
 const useResizeObserver = (callback, elements, dependencies) => {
   useEffect(() => {
     if (!window.ResizeObserver) {
@@ -33,6 +42,7 @@ const useResizeObserver = (callback, elements, dependencies) => {
   }, [callback, elements, dependencies]);
 };
 
+// Hook tải tất cả hình ảnh trước khi hiển thị
 const useImageLoader = (seqRef, onLoad, dependencies) => {
   useEffect(() => {
     const images = seqRef.current?.querySelectorAll('img') ?? [];
@@ -69,6 +79,7 @@ const useImageLoader = (seqRef, onLoad, dependencies) => {
   }, [onLoad, seqRef, dependencies]);
 };
 
+// Hook tạo vòng lặp animation cho logo
 const useAnimationLoop = (trackRef, targetVelocity, seqWidth, seqHeight, isHovered, hoverSpeed, isVertical) => {
   const rafRef = useRef(null);
   const lastTimestampRef = useRef(null);

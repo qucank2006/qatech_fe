@@ -1,7 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../services/api';
 
-// Async thunk to fetch products
+/**
+ * Product Slice - Quản lý danh sách sản phẩm
+ * Chức năng: Tải danh sách sản phẩm, chi tiết sản phẩm, bộ lọc
+ */
+
+// Async thunk để tải danh sách sản phẩm
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
   async (_, { rejectWithValue }) => {
@@ -14,11 +19,12 @@ export const fetchProducts = createAsyncThunk(
   }
 );
 
+// Async thunk để tải chi tiết sản phẩm theo ID hoặc slug
 export const fetchProductById = createAsyncThunk(
   'products/fetchProductById',
-  async (id, { rejectWithValue }) => {
+  async (slugOrId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/products/${id}`);
+      const response = await api.get(`/products/${slugOrId}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || 'Failed to fetch product');
@@ -29,7 +35,7 @@ export const fetchProductById = createAsyncThunk(
 const initialState = {
   items: [],
   selectedProduct: null,
-  status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+  status: 'idle',
   error: null,
   filters: {
     category: null,
@@ -41,16 +47,18 @@ const productSlice = createSlice({
   name: 'products',
   initialState,
   reducers: {
+    // Thiết lập bộ lọc sản phẩm
     setFilters: (state, action) => {
       state.filters = { ...state.filters, ...action.payload };
     },
+    // Xóa sản phẩm được chọn
     clearSelectedProduct: (state) => {
       state.selectedProduct = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Products
+      // Tải danh sách sản phẩm
       .addCase(fetchProducts.pending, (state) => {
         state.status = 'loading';
       })
@@ -62,7 +70,7 @@ const productSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload;
       })
-      // Fetch Product By ID
+      // Tải chi tiết sản phẩm
       .addCase(fetchProductById.pending, (state) => {
         state.status = 'loading';
       })

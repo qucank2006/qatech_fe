@@ -7,6 +7,10 @@ import router from './router';
 import './index.css';
 import './assets/styles/global.css';
 
+/**
+ * Entry Point - Điểm khởi đầu của ứng dụng React
+ * Cấu hình Redux Provider và React Router
+ */
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Provider store={store}>

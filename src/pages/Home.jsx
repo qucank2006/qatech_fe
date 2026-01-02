@@ -1,25 +1,3 @@
-//                       _oo0oo_
-//                      o8888888o
-//                      88" . "88
-//                      (| -_- |)
-//                      0\  =  /0
-//                    ___/`---'\___
-//                  .' \\|     |// '.
-//                 / \\|||  :  |||// \
-//                / _||||| -:- |||||- \
-//               |   | \\\  -  /// |   |
-//               | \_|  ''\---/''  |_/ |
-//               \  .-\__  '-'  ___/-. /
-//             ___'. .'  /--.--\  `. .'___
-//          ."" '<  `.___\_<|>_/___.' >' "".
-//         | | :  `- \`.;`\ _ /`;.`/ - ` : | |
-//         \  \ `_.   \_ __\ /__ _/   .-` /  /
-//     =====`-.____`.___ \_____/___.-`___.-'=====
-//                       `=---='
-//
-//     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//            Phật phù hộ, không bao giờ BUG
-//     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -32,11 +10,16 @@ import StoreCarousel from "../components/StoreCarousel";
 import { storeImages } from "../data/storeImg";
 import { LuTruck, LuShieldCheck, LuHeadphones } from "react-icons/lu";
 
+/**
+ * Trang chủ (Home Page)
+ * Hiển thị: Hero section, giới thiệu, dịch vụ, sản phẩm nổi bật, đánh giá khách hàng, thương hiệu
+ */
 export default function Home() {
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state) => state.auth);
   const { items: products, status } = useSelector((state) => state.products);
 
+  // Tải danh sách sản phẩm khi component mount
   useEffect(() => {
     if (status === 'idle') {
       dispatch(fetchProducts());
@@ -46,7 +29,7 @@ export default function Home() {
   return (
     <div className="w-full flex flex-col items-center text-center">
       
-      {/* HERO SECTION */}
+      {/* Phần Hero - Giới thiệu chính */}
       <section
         className="
           relative w-full min-h-[85vh] flex flex-col justify-center items-center px-4
@@ -54,16 +37,16 @@ export default function Home() {
           -mt-[65px] pt-[65px]
         "
       >
-        {/* Noise overlay */}
+        {/* Lớp phủ hiệu ứng nhiễu */}
         <div className="pointer-events-none absolute inset-0 opacity-[0.08] bg-[url('/noise.png')]"></div>
 
-        {/* Glow blob */}
+        {/* Hiệu ứng ánh sáng phát quang */}
         <div className="
           absolute top-1/3 left-1/2 -translate-x-1/2
           w-[600px] h-[600px] rounded-full
           bg-[radial-gradient(circle,rgba(0,140,255,0.35),transparent_70%)]
           blur-3xl opacity-60
-    ">
+        ">
         </div>
 
         <FadeContent blur={true} duration={1000} easing="ease-out" initialOpacity={0}>
@@ -100,7 +83,7 @@ export default function Home() {
         </FadeContent>
       </section>
 
-      {/* ABOUT SECTION */}
+      {/* Phần giới thiệu về QATech */}
       <section className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 px-6 py-20 text-left">
         <FadeContent blur={false} threshold={0.2}>
           <div>
@@ -132,7 +115,7 @@ export default function Home() {
 
       </section>
 
-      {/* WHY CHOOSE US */}
+      {/* Phần lý do chọn QATech */}
       <section className="max-w-6xl mx-auto py-20 px-6">
         <FadeContent blur={false}>
           <h2 className="text-3xl font-bold mb-12">Tại sao chọn QATech?</h2>
@@ -154,7 +137,8 @@ export default function Home() {
           ))}
         </div>
       </section>
-      {/*FEATURED PRODUCTS*/}
+      
+      {/* Phần sản phẩm nổi bật */}
       <section className="max-w-6xl mx-auto py-20 px-6">
         <FadeContent blur={false}>
           <h2 className="text-3xl font-bold mb-12">Sản phẩm nổi bật</h2>
@@ -172,7 +156,8 @@ export default function Home() {
           )}
         </div>
       </section>
-      {/* CUSTOMER REVIEWS */}
+      
+      {/* Phần đánh giá của khách hàng */}
       <section className="max-w-6xl mx-auto py-20 px-6">
         <FadeContent blur={false}>
           <h2 className="text-3xl font-bold mb-12">Khách hàng nói gì về QATech?</h2>
@@ -206,7 +191,8 @@ export default function Home() {
 
         </div>
       </section>
-      {/* LOGO LOOP — Ở GẦN CUỐI */}
+      
+      {/* Vòng lặp logo thương hiệu */}
       <section className="w-full max-w-6xl min-h-[120px] relative overflow-hidden py-10 mb-10">
         <FadeContent blur={false}>
           <h2 className="text-3xl font-bold mb-12">Các thương hiệu hàng đầu</h2>
@@ -225,6 +211,8 @@ export default function Home() {
           />
         </FadeContent>
       </section>
+
+      {/* Phần kêu gọi hành động (Call to Action) */}
 
       <section className="py-20 w-full text-center">
         <FadeContent blur={false}>

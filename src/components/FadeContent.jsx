@@ -1,5 +1,9 @@
 import { useRef, useEffect, useState } from 'react';
 
+/**
+ * Component FadeContent - Hiệu ứng fade-in khi phần tử xuất hiện trong viewport
+ * Sử dụng IntersectionObserver để phát hiện khi phần tử hiển thị trên màn hình
+ */
 const FadeContent = ({
   children,
   blur = false,
@@ -16,6 +20,7 @@ const FadeContent = ({
   useEffect(() => {
     if (!ref.current) return;
 
+    // Sử dụng IntersectionObserver để theo dõi khi phần tử vào viewport
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {

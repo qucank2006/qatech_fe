@@ -1,25 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { updateUser } from '../redux/slices/authSlice';
 import FadeContent from '../components/FadeContent';
 import { FaUser, FaBox, FaLock, FaSave, FaHistory, FaCamera } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import { getImageUrl } from '../utils/imageUrl';
 
 const Profile = () => {
   const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState('info');
   const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState(user?.avatar || null);
+  const [avatarFile, setAvatarFile] = useState(null);
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const imageUrl = URL.createObjectURL(file);
       setAvatar(imageUrl);
-      // Here you would typically upload the file to your server
-      // const formData = new FormData();
-      // formData.append('avatar', file);
-      // api.post('/users/avatar', formData);
+      setAvatarFile(file);
       toast.success("Đã chọn ảnh đại diện mới");
     }
   };
@@ -41,6 +42,19 @@ const Profile = () => {
 
   // Orders State
   const [orders, setOrders] = useState([]);
+
+  // Sync local state with Redux user state
+  useEffect(() => {
+    if (user) {
+      setInfoData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        address: user.address || '',
+      });
+      setAvatar(getImageUrl(user.avatar));
+    }
+  }, [user]);
 
   useEffect(() => {
     if (activeTab === 'orders') {
@@ -68,10 +82,28 @@ const Profile = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      // await api.put('/users/profile', infoData);
+      const formData = new FormData();
+      formData.append('name', infoData.name);
+      formData.append('phone', infoData.phone);
+      formData.append('address', infoData.address);
+      if (avatarFile) {
+        formData.append('avatar', avatarFile);
+      }
+
+      const res = await api.put('/auth/profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      // Kiểm tra cấu trúc response để lấy đúng object user
+      const updatedUser = res.data.user || res.data;
+      dispatch(updateUser(updatedUser));
+      
       toast.success("Cập nhật thông tin thành công!");
     } catch (error) {
-      toast.error("Cập nhật thất bại.");
+      console.error(error);
+      toast.error(error.response?.data?.msg || "Cập nhật thất bại.");
     } finally {
       setLoading(false);
     }
@@ -84,11 +116,19 @@ const Profile = () => {
     }
     setLoading(true);
     try {
-      // await api.put('/auth/change-password', passData);
+      const formData = new FormData();
+      formData.append('password', passData.newPassword);
+      
+      await api.put('/auth/profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       toast.success("Đổi mật khẩu thành công!");
       setPassData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
-      toast.error("Đổi mật khẩu thất bại.");
+      console.error(error);
+      toast.error(error.response?.data?.msg || "Đổi mật khẩu thất bại.");
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,12 @@
 import React from "react";
 import { LuLaptop, LuServer, LuMonitor, LuCpu, LuPrinter, LuBox } from "react-icons/lu";
 
+/**
+ * Component CategoryTabs - Thanh tab chọn danh mục sản phẩm
+ * Hiển thị các danh mục sản phẩm và cho phép chuyển đổi giữa chúng
+ */
+
+// Danh sách các danh mục sản phẩm
 const categories = [
   { id: "laptop", label: "Laptop", icon: <LuLaptop size={22} /> },
   { id: "pc", label: "PC", icon: <LuServer size={22} /> },

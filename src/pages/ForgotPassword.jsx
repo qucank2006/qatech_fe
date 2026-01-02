@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import api from '../services/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaEnvelope, FaArrowLeft } from 'react-icons/fa';
-import FadeContent from '../components/FadeContent';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -37,8 +36,8 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-[80vh] flex justify-center items-center px-4 relative overflow-hidden">
-      <FadeContent blur duration={800}>
-        <div className="bg-[#111] p-8 rounded-2xl border border-neutral-800 max-w-xl w-full shadow-2xl shadow-indigo-500/10 relative z-10">
+      <div className="w-full flex justify-center">
+        <div className="bg-[#111] p-8 rounded-2xl border border-neutral-800 max-w-md w-full shadow-2xl shadow-indigo-500/10 relative z-10">
           
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-500 to-cyan-400 bg-clip-text text-transparent mb-2">
@@ -90,7 +89,7 @@ const ForgotPassword = () => {
             </Link>
           </div>
         </div>
-      </FadeContent>
+      </div>
     </div>
   );
 };

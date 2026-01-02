@@ -1,5 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+/**
+ * Cart Slice - Quản lý giỏ hàng
+ * Chức năng: Thêm, xóa, cập nhật số lượng sản phẩm trong giỏ hàng
+ */
+
 const initialState = {
   items: [],
   totalQuantity: 0,
@@ -10,6 +15,7 @@ const cartSlice = createSlice({
   name: 'cart',
   initialState,
   reducers: {
+    // Thêm sản phẩm vào giỏ hàng
     addToCart: (state, action) => {
       const newItem = action.payload;
       const existingItem = state.items.find((item) => item.id === newItem.id);
@@ -35,6 +41,8 @@ const cartSlice = createSlice({
         0
       );
     },
+    
+    // Xóa sản phẩm khỏi giỏ hàng
     removeFromCart: (state, action) => {
       const id = action.payload;
       const existingItem = state.items.find((item) => item.id === id);
@@ -49,6 +57,8 @@ const cartSlice = createSlice({
         0
       );
     },
+    
+    // Cập nhật số lượng sản phẩm
     updateQuantity: (state, action) => {
       const { id, quantity } = action.payload;
       const existingItem = state.items.find((item) => item.id === id);
@@ -65,6 +75,8 @@ const cartSlice = createSlice({
         0
       );
     },
+    
+    // Xóa toàn bộ giỏ hàng
     clearCart: (state) => {
       state.items = [];
       state.totalQuantity = 0;

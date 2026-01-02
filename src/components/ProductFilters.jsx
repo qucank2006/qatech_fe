@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { LuFilter, LuChevronDown } from "react-icons/lu";
 
+/**
+ * Component ProductFilters - Bộ lọc sản phẩm
+ * Cho phép lọc sản phẩm theo giá, CPU, RAM, ổ cứng, màn hình
+ */
+
+// Danh sách các tiêu chí lọc
 const filters = [
   { id: "price", label: "Giá" },
   { id: "cpu", label: "CPU" },
@@ -16,6 +22,7 @@ export default function ProductFilters() {
   const [selectedRAMs, setSelectedRAMs] = useState([]);
   const filterRef = useRef(null);
 
+  // Tùy chọn CPU có sẵn
   const cpuOptions = [
     "Intel Core i3", "Intel Core i5", "Intel Core i7", "Intel Core i9",
     "Intel Celeron / Pentium", "AMD Ryzen 5", "AMD Ryzen 7", "AMD Ryzen 9",
@@ -23,11 +30,12 @@ export default function ProductFilters() {
     "Qualcomm Snapdragon", "Snapdragon X Plus", "Apple M4", "Apple M4 Pro", "Apple M4 Max", "Apple M5"
   ];
 
+  // Tùy chọn RAM có sẵn
   const ramOptions = [
     "8GB", "16GB", "24GB", "32GB", "36GB", "48GB", "64GB", "128GB"
   ];
 
-  // Close popup when clicking outside
+  // Đóng popup khi click bên ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (filterRef.current && !filterRef.current.contains(event.target)) {
@@ -38,21 +46,25 @@ export default function ProductFilters() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Xử lý thay đổi giá tối thiểu
   const handleMinChange = (e) => {
     const value = Math.min(Number(e.target.value), priceRange[1] - 1000000);
     setPriceRange([value, priceRange[1]]);
   };
 
+  // Xử lý thay đổi giá tối đa
   const handleMaxChange = (e) => {
     const value = Math.max(Number(e.target.value), priceRange[0] + 1000000);
     setPriceRange([priceRange[0], value]);
   };
 
+  // Xử lý chọn/bỏ chọn CPU
   const handleCpuToggle = (cpu) => {
     if (selectedCPUs.includes(cpu)) {
       setSelectedCPUs(selectedCPUs.filter(c => c !== cpu));
     } else {
       setSelectedCPUs([...selectedCPUs, cpu]);
+  // Xử lý chọn/bỏ chọn RAM
     }
   };
 
@@ -86,7 +98,7 @@ export default function ProductFilters() {
             <span>{f.label}</span>
             <LuChevronDown size={16} className={`transition-transform ${activeFilter === f.id ? "rotate-180" : ""}`} />
           </button>
-
+opup bộ lọc theo giá
           {/* PRICE POPUP */}
           {activeFilter === f.id && f.id === "price" && (
             <div className="absolute top-full left-0 mt-2 w-[320px] bg-[#1e1e1e] border border-neutral-800 rounded-xl shadow-2xl p-4 z-50">
@@ -102,7 +114,7 @@ export default function ProductFilters() {
                 </div>
               </div>
 
-              {/* Dual Range Slider */}
+              {/* Thanh trượt kép điều chỉnh giá */}
               <div className="relative h-6 mb-6 mx-2">
                  {/* Visual Track */}
                  <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1 bg-neutral-700 rounded"></div>
@@ -115,7 +127,7 @@ export default function ProductFilters() {
                    }}
                  ></div>
 
-                 {/* Range Inputs */}
+                 {/* Các thanh trượt điều chỉnh giá */}
                  <input 
                     type="range" 
                     min="0" 
@@ -160,7 +172,7 @@ export default function ProductFilters() {
             </div>
           )}
 
-          {/* CPU POPUP */}
+          {/* Popup bộ lọc theo CPU */}
           {activeFilter === f.id && f.id === "cpu" && (
             <div className="absolute top-full left-0 mt-2 w-[400px] bg-[#1e1e1e] border border-neutral-800 rounded-xl shadow-2xl p-4 z-50">
               <div className="flex flex-wrap gap-2 mb-6">
@@ -196,7 +208,7 @@ export default function ProductFilters() {
             </div>
           )}
 
-          {/* RAM POPUP */}
+          {/* Popup bộ lọc theo RAM */}
           {activeFilter === f.id && f.id === "ram" && (
             <div className="absolute top-full left-0 mt-2 w-[320px] bg-[#1e1e1e] border border-neutral-800 rounded-xl shadow-2xl p-4 z-50">
               <div className="flex flex-wrap gap-2 mb-6">

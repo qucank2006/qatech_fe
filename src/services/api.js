@@ -1,5 +1,10 @@
 import axios from 'axios';
 
+/**
+ * API Service - Cấu hình axios instance cho việc gọi API
+ * Bao gồm: Base URL, interceptors cho request và response
+ */
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
@@ -9,10 +14,10 @@ const api = axios.create({
   },
 });
 
-// Request Interceptor: Attach Token
+// Request Interceptor: Tự động gắn token vào header
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -23,22 +28,17 @@ api.interceptors.request.use(
   }
 );
 
-// Response Interceptor: Handle Errors
+// Response Interceptor: Xử lý lỗi chung
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Common error handling (e.g., logout on 401)
+    // Xử lý lỗi 401 (Unauthorized)
     if (error.response && error.response.status === 401) {
-      // Optional: Clear token and redirect to login
-      // localStorage.removeItem('token');
-      // window.location.href = '/login';
+      // Có thể thêm logic chuyển hướng về trang đăng nhập
     }
     
     const message = error.response?.data?.msg || 'Something went wrong';
     console.error('API Error:', message);
-    
-    // You can trigger a toast here if you have a toast library setup
-    // toast.error(message);
 
     return Promise.reject(error);
   }

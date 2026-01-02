@@ -5,7 +5,13 @@ import { LuMenu, LuX, LuSearch, LuShoppingCart, LuUser, LuLogOut } from "react-i
 import { FiHome, FiBox, FiLogIn } from "react-icons/fi";
 import { logout } from "../redux/slices/authSlice";
 import toast from "react-hot-toast";
+import { getImageUrl } from "../utils/imageUrl";
 
+/**
+ * Component Header - Thanh điều hướng chính của ứng dụng
+ * Bao gồm: Logo, thanh tìm kiếm, menu điều hướng, giỏ hàng, thông tin người dùng
+ * Responsive với menu mobile và desktop
+ */
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -17,8 +23,10 @@ export default function Header() {
   const { items } = useSelector((state) => state.cart);
   const { user, isAuthenticated } = useSelector((state) => state.auth);
 
+  // Tính tổng số lượng sản phẩm trong giỏ hàng
   const cartCount = items.reduce((total, item) => total + item.quantity, 0);
 
+  // Xử lý tìm kiếm sản phẩm
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
@@ -28,6 +36,7 @@ export default function Header() {
     }
   };
 
+  // Xử lý đăng xuất với xác nhận
   const handleLogout = () => {
     toast((t) => (
       <div className="flex flex-col gap-3 min-w-[200px]">
@@ -68,14 +77,14 @@ export default function Header() {
     <header className="w-full border-b border-neutral-800 bg-black/30 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
 
-        {/* LOGO */}
+        {/* Logo thương hiệu */}
         <Link to="/" className="flex items-center">
           <span className="text-2xl font-bold bg-gradient-to-r from-indigo-500 to-cyan-400 bg-clip-text text-transparent">
             QATech
           </span>
         </Link>
 
-        {/* SEARCH BAR - DESKTOP */}
+        {/* Thanh tìm kiếm - Phiên bản Desktop */}
         <div className="hidden md:flex flex-1 justify-center px-8">
           <form onSubmit={handleSearch} className="flex items-center bg-[#151515] border border-neutral-800 rounded-full px-4 py-2 w-full max-w-md focus-within:border-indigo-500 transition-colors">
             <LuSearch className="text-neutral-500 mr-2" />
@@ -89,7 +98,7 @@ export default function Header() {
           </form>
         </div>
 
-        {/* PC MENU */}
+        {/* Menu điều hướng - Phiên bản Desktop */}
         <nav className="hidden md:flex items-center gap-8 text-neutral-300">
           <Link to="/" className="flex items-center gap-2 hover:text-white transition-colors">
             <FiHome size={20} />
@@ -118,13 +127,23 @@ export default function Header() {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center gap-2 text-white hover:text-indigo-400 transition-colors focus:outline-none"
               >
-                <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center font-bold text-white">
-                  {user?.name?.charAt(0).toUpperCase() || <LuUser />}
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-neutral-700">
+                  {user?.avatar ? (
+                    <img 
+                      src={getImageUrl(user.avatar)} 
+                      alt={user.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-indigo-600 flex items-center justify-center font-bold text-white">
+                      {user?.name?.charAt(0).toUpperCase() || <LuUser />}
+                    </div>
+                  )}
                 </div>
                 <span className="text-sm font-medium hidden lg:block">{user?.name}</span>
               </button>
 
-              {/* Dropdown Menu */}
+              {/* Menu dropdown người dùng */}
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-56 bg-[#111] border border-neutral-800 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
                   <div className="px-4 py-3 border-b border-neutral-800 mb-2">
@@ -174,7 +193,7 @@ export default function Header() {
           )}
         </nav>
 
-        {/* MOBILE ACTIONS */}
+        {/* Các nút hành động - Phiên bản Mobile */}
         <div className="flex items-center gap-4 md:hidden">
           <Link to="/cart" className="relative text-neutral-300">
             <LuShoppingCart size={24} />
@@ -207,7 +226,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* MOBILE SEARCH BAR */}
+      {/* Thanh tìm kiếm - Phiên bản Mobile */}
       <div
         className={`md:hidden bg-black border-t border-neutral-800 overflow-hidden transition-all duration-300 ${
           showSearch ? "max-h-24 py-4" : "max-h-0"
@@ -228,7 +247,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* MOBILE MENU DROPDOWN */}
+      {/* Menu dropdown - Phiên bản Mobile */}
       <div
         className={`md:hidden bg-black border-t border-neutral-800 overflow-hidden transition-all duration-300 ${
           open ? "max-h-80 py-4" : "max-h-0"
@@ -241,8 +260,18 @@ export default function Header() {
           {isAuthenticated ? (
             <>
               <div className="flex items-center gap-2 text-white py-2 border-t border-neutral-800 w-full justify-center">
-                <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center font-bold">
-                  {user?.name?.charAt(0) || <LuUser />}
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-neutral-700">
+                  {user?.avatar ? (
+                    <img 
+                      src={getImageUrl(user.avatar)} 
+                      alt={user.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-indigo-600 flex items-center justify-center font-bold text-white">
+                      {user?.name?.charAt(0).toUpperCase() || <LuUser />}
+                    </div>
+                  )}
                 </div>
                 <span className="text-sm font-medium">{user?.name}</span>
               </div>

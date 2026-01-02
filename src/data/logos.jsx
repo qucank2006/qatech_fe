@@ -1,12 +1,13 @@
 import React from "react";
 import { 
   SiAcer, SiLenovo, SiMsibusiness, SiDell, SiHp, 
-  SiApple, SiLg, SiSamsung, SiIntel, SiAmd, SiNvidia 
+  SiApple, SiLg, SiSamsung, SiIntel, SiAmd, SiNvidia, SiAsus 
 } from 'react-icons/si';
 import { FaMicrosoft } from "react-icons/fa";
 
 export const techLogos = [
   { node: <SiAcer />, title: "Acer", href: "https://www.acer.com" },
+  { node: <SiAsus />, title: "ASUS", href: "https://www.asus.com" },
   { node: <SiLenovo />, title: "Lenovo", href: "https://www.lenovo.com" },
   { node: <SiMsibusiness />, title: "MSI", href: "https://www.msi.com" },
   { node: <SiDell />, title: "Dell", href: "https://www.dell.com" },

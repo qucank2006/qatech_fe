@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
-import FadeContent from '../components/FadeContent';
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState("");
@@ -25,8 +24,8 @@ const VerifyOtp = () => {
 
   return (
     <div className="min-h-[80vh] flex justify-center items-center px-4">
-      <FadeContent blur duration={800}>
-        <div className="bg-[#111] p-8 rounded-2xl border border-neutral-800 max-w-xl w-full shadow-2xl shadow-indigo-500/10">
+      <div className="w-full flex justify-center">
+        <div className="bg-[#111] p-8 rounded-2xl border border-neutral-800 max-w-md w-full shadow-2xl shadow-indigo-500/10">
 
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-500 to-cyan-400 bg-clip-text text-transparent mb-2">
@@ -74,7 +73,7 @@ const VerifyOtp = () => {
           </div>
 
         </div>
-      </FadeContent>
+      </div>
     </div>
   );
 };

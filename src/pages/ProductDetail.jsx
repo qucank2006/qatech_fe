@@ -5,21 +5,22 @@ import { fetchProductById } from "../redux/slices/productSlice";
 import { addToCart } from "../redux/slices/cartSlice";
 import { LuShoppingCart, LuHeart, LuTruck, LuShieldCheck, LuRotateCcw, LuCpu, LuMonitor, LuHardDrive } from "react-icons/lu";
 import { FaMemory } from "react-icons/fa";
-import FadeContent from "../components/FadeContent";
+import TechnicalSpecs from "../components/TechnicalSpecs";
 import toast from "react-hot-toast";
+import { getImageUrl } from "../utils/imageUrl";
 
 export default function ProductDetail() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const dispatch = useDispatch();
   const { selectedProduct: product, status } = useSelector((state) => state.products);
   const [activeImg, setActiveImg] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    if (id) {
-      dispatch(fetchProductById(id));
+    if (slug) {
+      dispatch(fetchProductById(slug));
     }
-  }, [id, dispatch]);
+  }, [slug, dispatch]);
 
   if (status === 'loading') {
     return <div className="min-h-screen flex items-center justify-center text-white">Đang tải...</div>;
@@ -30,7 +31,7 @@ export default function ProductDetail() {
   }
 
   // Mock images if product doesn't have multiple
-  const images = product.images || [product.image];
+  const images = product.images?.length ? product.images : [product.image];
 
   const handleAddToCart = () => {
     dispatch(addToCart({ ...product, quantity }));
@@ -42,11 +43,11 @@ export default function ProductDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         
         {/* LEFT: IMAGES */}
-        <FadeContent blur={true}>
+        <div>
           <div className="space-y-4">
-            <div className="aspect-[4/3] bg-[#151515] rounded-2xl overflow-hidden border border-neutral-800 flex items-center justify-center">
+            <div className="aspect-[4/3] bg-white rounded-2xl overflow-hidden border border-neutral-800 flex items-center justify-center">
               <img 
-                src={images[activeImg]} 
+                src={getImageUrl(images[activeImg])} 
                 alt={product.name} 
                 className="w-full h-full object-contain"
               />
@@ -61,16 +62,16 @@ export default function ProductDetail() {
                       activeImg === index ? "border-indigo-500" : "border-transparent opacity-60 hover:opacity-100"
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={getImageUrl(img)} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
             )}
           </div>
-        </FadeContent>
+        </div>
 
         {/* RIGHT: INFO */}
-        <FadeContent blur={false} delay={200}>
+        <div>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4">{product.name}</h1>
             
@@ -181,8 +182,10 @@ export default function ProductDetail() {
             </div>
 
           </div>
-        </FadeContent>
+        </div>
       </div>
+
+      <TechnicalSpecs specs={product.specs} />
     </div>
   );
 }

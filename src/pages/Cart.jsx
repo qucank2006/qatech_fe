@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { removeFromCart, clearCart } from "../redux/slices/cartSlice";
 import { LuTrash2, LuMinus, LuPlus, LuArrowRight, LuShoppingCart } from "react-icons/lu";
-import FadeContent from "../components/FadeContent";
+import { getImageUrl } from "../utils/imageUrl";
 
 export default function Cart() {
   const { items, totalAmount } = useSelector((state) => state.cart);
@@ -12,7 +12,7 @@ export default function Cart() {
   if (items.length === 0) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
-        <FadeContent blur={true}>
+        <div>
           <div className="w-24 h-24 bg-neutral-900 rounded-full flex items-center justify-center mb-6 mx-auto">
             <LuShoppingCart className="text-neutral-500" size={40} />
           </div>
@@ -24,7 +24,7 @@ export default function Cart() {
           >
             Mua sắm ngay
           </Link>
-        </FadeContent>
+        </div>
       </div>
     );
   }
@@ -37,10 +37,10 @@ export default function Cart() {
         {/* CART ITEMS */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <FadeContent key={item.id} blur={false}>
+            <div key={item.id}>
               <div className="bg-[#151515] border border-neutral-800 rounded-xl p-4 flex gap-4 items-center">
                 <div className="w-24 h-24 bg-neutral-900 rounded-lg overflow-hidden shrink-0">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                 </div>
                 
                 <div className="flex-1 min-w-0">
@@ -69,7 +69,7 @@ export default function Cart() {
                   <LuTrash2 size={20} />
                 </button>
               </div>
-            </FadeContent>
+            </div>
           ))}
         </div>
 

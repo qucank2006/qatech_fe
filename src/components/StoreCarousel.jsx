@@ -7,6 +7,10 @@ import React from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
 
+/**
+ * Component StoreCarousel - Slider hiển thị hình ảnh cửa hàng
+ * Sử dụng Swiper để tạo carousel tự động chuyển ảnh
+ */
 export default function StoreCarousel({ images }) {
   return (
     <Swiper

@@ -9,32 +9,37 @@ import {
   LuShoppingCart, 
   LuLogOut, 
   LuLayers,
-  LuUserCog
+  LuUserCog,
+  LuArrowLeft
 } from "react-icons/lu";
 
+/**
+ * AdminLayout - Layout cho trang quản trị
+ * Bao gồm Sidebar menu và nội dung trang chính
+ */
 const AdminLayout = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
 
+  // Xử lý đăng xuất
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
   };
 
+  // Danh sách menu admin
   const menuItems = [
     { path: '/admin/dashboard', icon: <LuLayoutDashboard size={20} />, label: 'Tổng quan' },
     { path: '/admin/products', icon: <LuShoppingBag size={20} />, label: 'Sản phẩm' },
-    // { path: '/admin/categories', icon: <LuLayers size={20} />, label: 'Danh mục' },
     { path: '/admin/orders', icon: <LuShoppingCart size={20} />, label: 'Đơn hàng' },
     { path: '/admin/users', icon: <LuUsers size={20} />, label: 'Khách hàng' },
-    // { path: '/admin/employees', icon: <LuUserCog size={20} />, label: 'Nhân viên' },
   ];
 
   return (
     <div className="flex h-screen bg-[#0f0f0f] text-white">
-      {/* Sidebar */}
+      {/* Sidebar menu quản trị */}
       <aside className="w-64 bg-[#151515] border-r border-neutral-800 flex flex-col fixed h-full z-20">
         <div className="p-6 border-b border-neutral-800">
           <h1 className="text-2xl font-bold text-indigo-500">QATech Admin</h1>
@@ -60,13 +65,24 @@ const AdminLayout = () => {
           })}
         </nav>
 
-        <div className="p-4 border-t border-neutral-800">
+        <div className="p-4 border-t border-neutral-800 flex gap-2">
+          <Link 
+            to="/"
+            className="group flex items-center justify-center p-3 text-neutral-400 hover:bg-neutral-800 hover:text-white rounded-xl transition-all duration-300 ease-in-out flex-1 hover:flex-[3] overflow-hidden"
+          >
+            <LuArrowLeft size={20} className="shrink-0" />
+            <span className="max-w-0 opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:ml-2 transition-all duration-300 whitespace-nowrap">
+              Về trang chủ
+            </span>
+          </Link>
           <button 
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 w-full text-neutral-400 hover:bg-red-500/10 hover:text-red-500 rounded-xl transition-colors"
+            className="group flex items-center justify-center p-3 text-neutral-400 hover:bg-red-500/10 hover:text-red-500 rounded-xl transition-all duration-300 ease-in-out flex-1 hover:flex-[3] overflow-hidden"
           >
-            <LuLogOut size={20} />
-            <span className="font-medium">Đăng xuất</span>
+            <LuLogOut size={20} className="shrink-0" />
+            <span className="max-w-0 opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:ml-2 transition-all duration-300 whitespace-nowrap">
+              Đăng xuất
+            </span>
           </button>
         </div>
       </aside>
