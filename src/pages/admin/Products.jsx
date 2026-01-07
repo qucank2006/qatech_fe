@@ -3,39 +3,29 @@ import { LuPlus, LuSearch, LuPencil, LuTrash2, LuFilter, LuX, LuUpload } from "r
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { getImageUrl } from '../../utils/imageUrl';
+import { getSpecsFields } from '../../components/admin/SpecsFieldsConfig';
 
 const AdminProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('all'); // Category filter
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     oldPrice: '',
     category: '',
+    subCategory: '',
     brand: '',
     usage: '',
     stock: '',
     images: [],
-    specs: {
-      cpu: '',
-      ramCapacity: '',
-      ramType: '',
-      ramSlots: '',
-      storage: '',
-      os: '',
-      battery: '',
-      gpu: '',
-      screenSize: '',
-      screenTech: '',
-      screenResolution: '',
-      ports: '',
-      others: ''
-    }
+    specs: {} // Object động chứa thông số kỹ thuật
   });
-  const [imagePreviews, setImagePreviews] = useState([]); // Changed from imagePreview to imagePreviews array
+  const [imagePreviews, setImagePreviews] = useState([]); // Array of {id, url, type: 'existing'|'new', data: file_or_url}
+  const [nextId, setNextId] = useState(0); // Counter cho unique ID
   const hasFetched = React.useRef(false);
 
   useEffect(() => {
@@ -51,7 +41,12 @@ const AdminProducts = () => {
       setProducts(res.data);
     } catch (error) {
       console.error("Error fetching products:", error);
-      toast.error("Không thể tải danh sách sản phẩm");
+      // Kiểm tra lỗi kết nối
+      if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
+        toast.error("Không thể kết nối đến server. Vui lòng kiểm tra backend server có đang chạy không.");
+      } else {
+        toast.error(error.response?.data?.msg || "Không thể tải danh sách sản phẩm");
+      }
     } finally {
       setLoading(false);
     }
@@ -66,7 +61,10 @@ const AdminProducts = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      specs: { ...prev.specs, [name]: value }
+      specs: {
+        ...prev.specs,
+        [name]: value
+      }
     }));
   };
 
@@ -75,17 +73,35 @@ const AdminProducts = () => {
     if (files.length > 0) {
       setFormData(prev => ({ ...prev, images: [...prev.images, ...files] }));
       
-      const newPreviews = files.map(file => URL.createObjectURL(file));
+      const newPreviews = files.map((file, idx) => ({
+        id: nextId + idx,
+        url: URL.createObjectURL(file),
+        type: 'new',
+        file: file
+      }));
+      
       setImagePreviews(prev => [...prev, ...newPreviews]);
+      setNextId(prev => prev + files.length);
     }
   };
 
-  const removeImage = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  const removeImage = (id) => {
+    const preview = imagePreviews.find(p => p.id === id);
+    if (!preview) return;
+    
+    if (preview.type === 'existing') {
+      // Xóa URL khỏi danh sách ảnh cũ
+      // Không làm gì với formData.images
+    } else {
+      // Xóa file khỏi formData.images
+      setFormData(prev => ({
+        ...prev,
+        images: prev.images.filter(file => file !== preview.file)
+      }));
+    }
+    
+    // Xóa khỏi preview list
+    setImagePreviews(prev => prev.filter(p => p.id !== id));
   };
 
   const handleSubmit = async (e) => {
@@ -96,27 +112,35 @@ const AdminProducts = () => {
     data.append('price', formData.price);
     data.append('oldPrice', formData.oldPrice);
     data.append('category', formData.category);
+    data.append('subCategory', formData.subCategory || '');
     data.append('brand', formData.brand);
     data.append('usage', formData.usage);
     data.append('stock', formData.stock);
-    data.append('specs', JSON.stringify(formData.specs));
     
-    // Append each file to 'images' field (assuming backend handles array)
-    // If backend expects 'image' for single and 'images' for multiple, adjust accordingly.
-    // Here we assume backend can handle multiple files under 'images' key.
+    // Gửi specs - từng field riêng lẻ (theo yêu cầu backend)
+    if (formData.specs && typeof formData.specs === 'object') {
+      Object.keys(formData.specs).forEach(key => {
+        const value = formData.specs[key];
+        if (value !== undefined && value !== null && value !== '') {
+          data.append(key, value);
+        }
+      });
+    }
+    
+    // Gửi danh sách ảnh cũ cần giữ (khi edit)
+    // Luôn gửi keptImages khi cập nhật để backend biết cần giữ ảnh nào
+    if (editingProduct) {
+      const keptImageUrls = imagePreviews
+        .filter(p => p.type === 'existing')
+        .map(p => p.originalUrl);
+      // Luôn gửi keptImages, kể cả khi mảng rỗng (nếu người dùng xóa hết ảnh)
+      data.append('keptImages', JSON.stringify(keptImageUrls));
+    }
+    
+    // Thêm hình ảnh mới
     formData.images.forEach((file) => {
       if (file instanceof File) {
         data.append('images', file);
-      } else {
-        // If it's an existing image URL (string), we might need to handle it differently
-        // depending on backend logic. Usually backend keeps existing if not provided.
-        // Or we send a list of 'kept' image URLs.
-        // For simplicity, let's assume we only upload NEW files here, 
-        // and maybe send a separate field for 'keptImages' if needed.
-        // But standard FormData upload usually replaces. 
-        // Let's try appending all new files.
-        // If we want to keep old images, we might need a separate logic.
-        // Let's assume for now we are just uploading new files.
       }
     });
 
@@ -141,13 +165,23 @@ const AdminProducts = () => {
   };
 
   const handleDelete = async (product) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa "${product.name}"?`)) {
       try {
-        await api.delete(`/products/${product.slug || product._id || product.id}`);
-        setProducts(products.filter(p => p._id !== product._id && p.id !== product.id));
-        toast.success('Đã xóa sản phẩm');
+        const response = await api.delete(`/products/${product.slug || product._id || product.id}`);
+        
+        // Cập nhật state: filter ra sản phẩm đã xóa
+        setProducts(prevProducts => 
+          prevProducts.filter(p => {
+            const productId = p._id || p.id;
+            const deletedId = product._id || product.id;
+            return productId !== deletedId;
+          })
+        );
+        
+        toast.success(response.data?.msg || 'Đã xóa sản phẩm thành công');
       } catch (error) {
-        toast.error('Xóa thất bại');
+        console.error('Error deleting product:', error);
+        toast.error(error.response?.data?.msg || 'Xóa sản phẩm thất bại');
       }
     }
   };
@@ -155,8 +189,22 @@ const AdminProducts = () => {
   const openModal = (product = null) => {
     if (product) {
       setEditingProduct(product);
-      // Handle existing images
-      const existingImages = product.images || (product.image ? [product.image] : []);
+      
+      // Lọc và validate images - chỉ lấy ảnh hợp lệ
+      let existingImages = [];
+      if (Array.isArray(product.images)) {
+        existingImages = product.images.filter(img => {
+          if (!img || typeof img !== 'string' || img.trim() === '') return false;
+          // Kiểm tra URL hợp lệ trước khi thêm vào
+          const url = getImageUrl(img);
+          return url && url !== 'null' && !url.includes('null') && !url.includes('undefined');
+        });
+      } else if (product.image && typeof product.image === 'string' && product.image.trim() !== '') {
+        const url = getImageUrl(product.image);
+        if (url && url !== 'null' && !url.includes('null') && !url.includes('undefined')) {
+          existingImages = [product.image];
+        }
+      }
       
       setFormData({
         name: product.name,
@@ -164,27 +212,28 @@ const AdminProducts = () => {
         price: product.price,
         oldPrice: product.oldPrice || '',
         category: product.category || '',
+        subCategory: product.subCategory || product.type || '',
         brand: product.brand || '',
         usage: product.usage || '',
         stock: product.stock || 0,
-        images: [], // We start with empty new files, but show previews of existing
-        specs: {
-          cpu: product.specs?.cpu || '',
-          ram: product.specs?.ram || '',
-          screen: product.specs?.screen || '',
-          ssd: product.specs?.ssd || '',
-          gpu: product.specs?.gpu || '',
-          os: product.specs?.os || '',
-          battery: product.specs?.battery || '',
-          weight: product.specs?.weight || '',
-          ports: product.specs?.ports || '',
-          material: product.specs?.material || '',
-          size: product.specs?.size || '',
-          releaseDate: product.specs?.releaseDate || ''
-        }
+        images: [],
+        specs: product.specs || {} // Load specs object từ product
       });
       
-      setImagePreviews(existingImages.map(img => getImageUrl(img)));
+      // Tạo previews cho ảnh hợp lệ với ID duy nhất
+      let currentId = 0;
+      const validPreviews = existingImages.map((img) => {
+        const url = getImageUrl(img);
+        return {
+          id: currentId++,
+          url: url,
+          type: 'existing',
+          originalUrl: img
+        };
+      });
+      
+      setImagePreviews(validPreviews);
+      setNextId(currentId);
     } else {
       setEditingProduct(null);
       setFormData({
@@ -193,25 +242,12 @@ const AdminProducts = () => {
         price: '',
         oldPrice: '',
         category: '',
+        subCategory: '',
         brand: '',
         usage: '',
         stock: '',
         images: [],
-        specs: {
-          cpu: '',
-          ramCapacity: '',
-          ramType: '',
-          ramSlots: '',
-          storage: '',
-          os: '',
-          battery: '',
-          gpu: '',
-          screenSize: '',
-          screenTech: '',
-          screenResolution: '',
-          ports: '',
-          others: ''
-        }
+        specs: {}
       });
       setImagePreviews([]);
     }
@@ -227,30 +263,29 @@ const AdminProducts = () => {
       price: '',
       oldPrice: '',
       category: '',
+      subCategory: '',
       brand: '',
       usage: '',
       stock: '',
       images: [],
-      specs: {
-        cpu: '',
-        ramCapacity: '',
-        ramType: '',
-        ramSlots: '',
-        storage: '',
-        os: '',
-        battery: '',
-        gpu: '',
-        screenSize: '',
-        screenTech: '',
-        screenResolution: '',
-        ports: '',
-        others: ''
-      }
+      specs: {}
     });
     setImagePreviews([]);
+    setNextId(0);
   };
 
   if (loading) return <div className="text-white p-6">Đang tải...</div>;
+
+  // Lọc sản phẩm theo category
+  const filteredProducts = selectedCategory === 'all' 
+    ? products 
+    : products.filter(p => {
+        const productCat = p.category?.toLowerCase();
+        if (selectedCategory === 'parts') {
+          return productCat === 'parts' || productCat === 'accessory' || productCat === 'linh kien';
+        }
+        return productCat === selectedCategory;
+      });
 
   return (
     <div className="space-y-6">
@@ -263,6 +298,30 @@ const AdminProducts = () => {
           <LuPlus size={20} />
           <span>Thêm sản phẩm</span>
         </button>
+      </div>
+
+      {/* Category Filter Tabs */}
+      <div className="bg-[#151515] border border-neutral-800 rounded-xl p-4">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: 'all', label: 'Tất cả' },
+            { id: 'laptop', label: 'Laptop' },
+            { id: 'monitor', label: 'Màn hình' },
+            { id: 'parts', label: 'Linh kiện' }
+          ].map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                selectedCategory === cat.id
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-white'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Filters & Search */}
@@ -298,7 +357,7 @@ const AdminProducts = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-800">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <tr key={product._id || product.id} className="hover:bg-neutral-900/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -316,7 +375,7 @@ const AdminProducts = () => {
                       ${product.stock > 10 ? 'bg-green-500/10 text-green-500' : 
                         product.stock > 0 ? 'bg-yellow-500/10 text-yellow-500' : 
                         'bg-red-500/10 text-red-500'}`}>
-                      {product.stock > 10 ? 'In Stock' : product.stock > 0 ? 'Low Stock' : 'Out of Stock'}
+                      {product.stock > 10 ? 'Còn hàng' : product.stock > 0 ? 'Sắp hết' : 'Hết hàng'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -360,18 +419,32 @@ const AdminProducts = () => {
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-neutral-400">Hình ảnh sản phẩm</label>
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-neutral-700 group">
-                      <img src={preview} alt={`Preview ${index}`} className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <LuX size={14} />
-                      </button>
-                    </div>
-                  ))}
+                  {imagePreviews.map((preview) => {
+                    // Chỉ hiển thị preview nếu URL hợp lệ
+                    if (!preview.url || preview.url === 'null' || preview.url.includes('null') || preview.url.includes('undefined')) {
+                      return null;
+                    }
+                    return (
+                      <div key={preview.id} className="relative aspect-square rounded-xl overflow-hidden border border-neutral-700 group">
+                        <img 
+                          src={preview.url} 
+                          alt={`Product image ${preview.id + 1}`} 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Nếu ảnh không load được, ẩn nó
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(preview.id)}
+                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <LuX size={14} />
+                        </button>
+                      </div>
+                    );
+                  })}
                   
                   <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-dashed border-neutral-700 hover:border-indigo-500 transition-colors bg-neutral-900 flex flex-col items-center justify-center text-neutral-500 cursor-pointer">
                     <LuUpload size={24} className="mb-2" />
@@ -417,12 +490,35 @@ const AdminProducts = () => {
                       >
                         <option value="">Chọn danh mục</option>
                         <option value="laptop">Laptop</option>
-                        <option value="pc">PC</option>
-                        <option value="accessory">Phụ kiện</option>
+                        <option value="parts">Linh kiện</option>
                         <option value="monitor">Màn hình</option>
-                        <option value="printer">Máy in</option>
                       </select>
                     </div>
+                    
+                    {/* Sub-category cho Linh kiện */}
+                    {formData.category === 'parts' && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-neutral-400">Loại linh kiện</label>
+                        <select
+                          name="subCategory"
+                          value={formData.subCategory}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
+                        >
+                          <option value="">Chọn loại</option>
+                          <option value="cpu">CPU</option>
+                          <option value="mainboard">Mainboard</option>
+                          <option value="ram">RAM</option>
+                          <option value="storage">Storage (Ổ cứng)</option>
+                          <option value="gpu">GPU (Card đồ họa)</option>
+                          <option value="psu">PSU (Nguồn)</option>
+                          <option value="cooling">Cooling (Tản nhiệt)</option>
+                          <option value="case">Case (Vỏ máy)</option>
+                        </select>
+                      </div>
+                    )}
+                    
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-neutral-400">Thương hiệu</label>
                       <select
@@ -432,36 +528,84 @@ const AdminProducts = () => {
                         className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
                       >
                         <option value="">Chọn thương hiệu</option>
-                        <option value="Acer">Acer</option>
-                        <option value="Lenovo">Lenovo</option>
-                        <option value="MSI">MSI</option>
-                        <option value="Dell">Dell</option>
-                        <option value="HP">HP</option>
-                        <option value="Apple">Apple</option>
-                        <option value="Microsoft">Microsoft</option>
-                        <option value="LG">LG</option>
-                        <option value="Samsung">Samsung</option>
-                        <option value="Asus">Asus</option>
+                        {formData.category === 'parts' ? (
+                          // Thương hiệu cho linh kiện
+                          <>
+                            <option value="ASUS">ASUS</option>
+                            <option value="Intel">Intel</option>
+                            <option value="MSI">MSI</option>
+                            <option value="Samsung">Samsung</option>
+                            <option value="Gigabyte">Gigabyte</option>
+                            <option value="ASRock">ASRock</option>
+                            <option value="Kingston">Kingston</option>
+                            <option value="DeepCool">DeepCool</option>
+                            <option value="Cooler Master">Cooler Master</option>
+                            <option value="Lexar">Lexar</option>
+                            <option value="Western Digital">Western Digital</option>
+                            <option value="ADATA">ADATA</option>
+                            <option value="Seagate">Seagate</option>
+                            <option value="Xigmatek">Xigmatek</option>
+                            <option value="Corsair">Corsair</option>
+                            <option value="Transcend">Transcend</option>
+                            <option value="AMD">AMD</option>
+                            <option value="NVIDIA">NVIDIA</option>
+                          </>
+                        ) : formData.category === 'monitor' ? (
+                          // Thương hiệu cho màn hình
+                          <>
+                            <option value="ASUS">ASUS</option>
+                            <option value="LG">LG</option>
+                            <option value="Samsung">Samsung</option>
+                            <option value="MSI">MSI</option>
+                            <option value="Xiaomi">Xiaomi</option>
+                            <option value="Dell">Dell</option>
+                            <option value="AOC">AOC</option>
+                            <option value="Acer">Acer</option>
+                            <option value="Philips">Philips</option>
+                            <option value="ViewSonic">ViewSonic</option>
+                            <option value="Lenovo">Lenovo</option>
+                            <option value="E-DRA">E-DRA</option>
+                          </>
+                        ) : (
+                          // Thương hiệu cho laptop
+                          <>
+                            <option value="Acer">Acer</option>
+                            <option value="Lenovo">Lenovo</option>
+                            <option value="MSI">MSI</option>
+                            <option value="Dell">Dell</option>
+                            <option value="HP">HP</option>
+                            <option value="Apple">Apple</option>
+                            <option value="Microsoft">Microsoft</option>
+                            <option value="LG">LG</option>
+                            <option value="Samsung">Samsung</option>
+                            <option value="Asus">Asus</option>
+                            <option value="Gigabyte">Gigabyte</option>
+                          </>
+                        )}
                       </select>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-neutral-400">Nhu cầu sử dụng</label>
-                      <select
-                        name="usage"
-                        value={formData.usage}
-                        onChange={handleInputChange}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
-                      >
-                        <option value="">Chọn nhu cầu</option>
-                        <option value="Gaming">Gaming</option>
-                        <option value="Văn Phòng">Văn Phòng</option>
-                        <option value="Mỏng Nhẹ">Mỏng Nhẹ</option>
-                        <option value="Đồ Họa - Kỹ Thuật">Đồ Họa - Kỹ Thuật</option>
-                        <option value="Sinh Viên">Sinh Viên</option>
-                        <option value="Cảm Ứng">Cảm Ứng</option>
-                        <option value="Laptop AI">Laptop AI</option>
-                      </select>
-                    </div>
+                    
+                    {/* Nhu cầu sử dụng - chỉ hiển thị cho laptop */}
+                    {formData.category === 'laptop' && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-neutral-400">Nhu cầu sử dụng</label>
+                        <select
+                          name="usage"
+                          value={formData.usage}
+                          onChange={handleInputChange}
+                          className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
+                        >
+                          <option value="">Chọn nhu cầu</option>
+                          <option value="Gaming">Gaming</option>
+                          <option value="Văn Phòng">Văn Phòng</option>
+                          <option value="Mỏng Nhẹ">Mỏng Nhẹ</option>
+                          <option value="Đồ Họa - Kỹ Thuật">Đồ Họa - Kỹ Thuật</option>
+                          <option value="Sinh Viên">Sinh Viên</option>
+                          <option value="Cảm Ứng">Cảm Ứng</option>
+                          <option value="Laptop AI">Laptop AI</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -516,175 +660,39 @@ const AdminProducts = () => {
                 </div>
               </div>
 
-              {/* Technical Specs */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-white border-b border-neutral-800 pb-2">Thông số kỹ thuật</h3>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Left Column: Single Line Inputs */}
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-neutral-400">Loại CPU</label>
-                      <input
-                        type="text"
-                        name="cpu"
-                        value={formData.specs.cpu}
-                        onChange={handleSpecsChange}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
-                        placeholder="VD: Intel Core i5-12450H"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-neutral-400">Dung lượng RAM</label>
-                        <input
-                          type="text"
-                          name="ramCapacity"
-                          value={formData.specs.ramCapacity}
-                          onChange={handleSpecsChange}
-                          className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
-                          placeholder="VD: 16GB"
-                        />
+              {/* Technical Specs - Dynamic Fields */}
+              {formData.category && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-white border-b border-neutral-800 pb-2">Thông số kỹ thuật</h3>
+                  {(() => {
+                    const specsFields = getSpecsFields(formData.category, formData.subCategory);
+                    
+                    if (specsFields.length === 0) {
+                      return (
+                        <p className="text-neutral-500 text-sm">Chưa có cấu hình thông số cho loại sản phẩm này</p>
+                      );
+                    }
+                    
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {specsFields.map((field) => (
+                          <div key={field.name} className="space-y-2">
+                            <label className="text-sm font-medium text-neutral-400">{field.label}</label>
+                            <input
+                              type="text"
+                              name={field.name}
+                              value={formData.specs[field.name] || ''}
+                              onChange={handleSpecsChange}
+                              className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
+                              placeholder={field.placeholder}
+                            />
+                          </div>
+                        ))}
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-neutral-400">Loại RAM</label>
-                        <input
-                          type="text"
-                          name="ramType"
-                          value={formData.specs.ramType}
-                          onChange={handleSpecsChange}
-                          className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
-                          placeholder="VD: DDR5"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-neutral-400">Số khe RAM</label>
-                      <input
-                        type="text"
-                        name="ramSlots"
-                        value={formData.specs.ramSlots}
-                        onChange={handleSpecsChange}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
-                        placeholder="VD: 2 khe (1 khe 8GB onboard + 1 khe trống)"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-neutral-400">Ổ cứng</label>
-                      <input
-                        type="text"
-                        name="storage"
-                        value={formData.specs.storage}
-                        onChange={handleSpecsChange}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
-                        placeholder="VD: 512GB SSD NVMe PCIe Gen 4.0"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-neutral-400">Hệ điều hành</label>
-                      <input
-                        type="text"
-                        name="os"
-                        value={formData.specs.os}
-                        onChange={handleSpecsChange}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
-                        placeholder="VD: Windows 11 Home"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-neutral-400">Pin</label>
-                      <input
-                        type="text"
-                        name="battery"
-                        value={formData.specs.battery}
-                        onChange={handleSpecsChange}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
-                        placeholder="VD: 56WHrs, 3 cell"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-neutral-400">Kích thước màn hình</label>
-                        <input
-                          type="text"
-                          name="screenSize"
-                          value={formData.specs.screenSize}
-                          onChange={handleSpecsChange}
-                          className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
-                          placeholder="VD: 15.6 inch"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-neutral-400">Độ phân giải màn hình</label>
-                        <input
-                          type="text"
-                          name="screenResolution"
-                          value={formData.specs.screenResolution}
-                          onChange={handleSpecsChange}
-                          className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none"
-                          placeholder="VD: 1920 x 1080 (FHD)"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Textarea Inputs */}
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-neutral-400">Loại card đồ họa</label>
-                      <textarea
-                        name="gpu"
-                        value={formData.specs.gpu}
-                        onChange={handleSpecsChange}
-                        rows={3}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none resize-none"
-                        placeholder="VD: NVIDIA GeForce RTX 3050 4GB GDDR6 + Intel UHD Graphics"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-neutral-400">Công nghệ màn hình</label>
-                      <textarea
-                        name="screenTech"
-                        value={formData.specs.screenTech}
-                        onChange={handleSpecsChange}
-                        rows={3}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none resize-none"
-                        placeholder="VD: IPS, chống chói, 250 nits, 45% NTSC, 60Hz"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-neutral-400">Cổng giao tiếp</label>
-                      <textarea
-                        name="ports"
-                        value={formData.specs.ports}
-                        onChange={handleSpecsChange}
-                        rows={4}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none resize-none"
-                        placeholder="VD: 1x USB Type-C, 2x USB 3.2, 1x HDMI, 1x Jack tai nghe 3.5mm, 1x LAN (RJ-45)"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-neutral-400">Các thông số khác</label>
-                      <textarea
-                        name="others"
-                        value={formData.specs.others}
-                        onChange={handleSpecsChange}
-                        rows={4}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none resize-none"
-                        placeholder="VD: Bàn phím: Có đèn nền RGB&#10;Hệ điều hành: Windows 11 Home&#10;Trọng lượng: 2.3 kg&#10;Kích thước: 359 x 256 x 22.9 mm"
-                      />
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
-              </div>
+              )}
 
               <div className="flex justify-end gap-3 pt-4 border-t border-neutral-800 sticky bottom-0 bg-[#151515] pb-2">
                 <button

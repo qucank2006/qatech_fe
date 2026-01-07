@@ -32,10 +32,32 @@ export const fetchProductById = createAsyncThunk(
   }
 );
 
+// Async thunk để tải danh sách sản phẩm tương tự
+export const fetchRelatedProducts = createAsyncThunk(
+  'products/fetchRelatedProducts',
+  async ({ category, brand, currentProductId, limit = 8 }, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams();
+      if (category) params.append('category', category);
+      if (brand) params.append('brand', brand);
+      if (limit) params.append('limit', limit);
+      
+      const response = await api.get(`/products?${params.toString()}`);
+      // Lọc bỏ sản phẩm hiện tại khỏi danh sách
+      const filtered = response.data.filter(p => p._id !== currentProductId && p.id !== currentProductId);
+      return filtered.slice(0, limit);
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Failed to fetch related products');
+    }
+  }
+);
+
 const initialState = {
   items: [],
   selectedProduct: null,
+  relatedProducts: [],
   status: 'idle',
+  relatedStatus: 'idle',
   error: null,
   filters: {
     category: null,
@@ -81,6 +103,17 @@ const productSlice = createSlice({
       .addCase(fetchProductById.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
+      })
+      // Tải sản phẩm tương tự
+      .addCase(fetchRelatedProducts.pending, (state) => {
+        state.relatedStatus = 'loading';
+      })
+      .addCase(fetchRelatedProducts.fulfilled, (state, action) => {
+        state.relatedStatus = 'succeeded';
+        state.relatedProducts = action.payload;
+      })
+      .addCase(fetchRelatedProducts.rejected, (state) => {
+        state.relatedStatus = 'failed';
       });
   },
 });

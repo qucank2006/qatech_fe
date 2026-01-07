@@ -10,16 +10,20 @@ import Cart from '../pages/Cart';
 import Checkout from '../pages/Checkout';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
-import ProtectedRoute from '../components/ProtectedRoute';
+import ProtectedRoute from './ProtectedRoute';
 import ForgotPassword from '../pages/ForgotPassword';
 import VerifyOTP from '../pages/VerifyOTP';
 import ResetPassword from '../pages/ResetPassword';
 import Profile from '../pages/Profile';
+import VNPayReturn from '../pages/VNPayReturn';
+import MyOrders from '../pages/MyOrders';
+import OrderDetail from '../pages/OrderDetail';
 
 import Dashboard from '../pages/admin/Dashboard';
 import AdminProducts from '../pages/admin/Products';
 import Orders from '../pages/admin/Orders';
 import Users from '../pages/admin/Users';
+import Staff from '../pages/admin/Staff';
 
 /**
  * Router Configuration - Cấu hình các route của ứng dụng
@@ -75,21 +79,33 @@ const router = createBrowserRouter([
             element: <ResetPassword />,
           },
           {
+            path: 'payment/vnpay-return',
+            element: <VNPayReturn />,
+          },
+          {
             element: <ProtectedRoute />,
             children: [
               {
                 path: 'profile',
                 element: <Profile />,
+              },
+              {
+                path: 'orders',
+                element: <MyOrders />,
+              },
+              {
+                path: 'orders/:id',
+                element: <OrderDetail />,
               }
             ]
           }
         ]
       },
       
-      // Các route admin yêu cầu quyền admin (sử dụng AdminLayout)
+      // Các route admin yêu cầu quyền admin hoặc employee (sử dụng AdminLayout)
       {
         path: 'admin',
-        element: <ProtectedRoute adminOnly={true} />,
+        element: <ProtectedRoute allowedRoles={['admin', 'employee']} />,
         children: [
           {
             element: <AdminLayout />,
@@ -100,7 +116,11 @@ const router = createBrowserRouter([
               },
               {
                 path: 'products',
-                element: <AdminProducts />,
+                element: (
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminProducts />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: 'orders',
@@ -108,7 +128,19 @@ const router = createBrowserRouter([
               },
               {
                 path: 'users',
-                element: <Users />,
+                element: (
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <Users />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: 'staff',
+                element: (
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <Staff />
+                  </ProtectedRoute>
+                ),
               },
             ]
           }

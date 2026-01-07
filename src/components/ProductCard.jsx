@@ -6,6 +6,7 @@ import { LuHeart, LuShoppingCart, LuCpu, LuHardDrive, LuMonitor } from "react-ic
 import { FaMemory } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { getImageUrl } from "../utils/imageUrl";
+import { extractCPUName, formatRAM, formatScreenSize } from "../utils/formatters";
 
 /**
  * Component ProductCard - Thẻ hiển thị thông tin sản phẩm
@@ -62,19 +63,19 @@ export default function ProductCard({ product }) {
 
         {/* Thông số kỹ thuật */}
         <div className="flex flex-wrap gap-2 mb-4 text-xs text-neutral-400">
-          {product.specs?.cpu && (
+          {product.cpuType && (
             <div className="flex items-center gap-1 bg-neutral-800/50 px-2 py-1 rounded">
-              <LuCpu size={12} /> {product.specs.cpu}
+              <LuCpu size={12} /> {extractCPUName(product.cpuType)}
             </div>
           )}
-          {product.specs?.ram && (
+          {product.ramCapacity && (
             <div className="flex items-center gap-1 bg-neutral-800/50 px-2 py-1 rounded">
-              <FaMemory size={12} /> {product.specs.ram}
+              <FaMemory size={12} /> {formatRAM(product.ramCapacity)}
             </div>
           )}
-          {product.specs?.screen && (
+          {product.screenSize && (
             <div className="flex items-center gap-1 bg-neutral-800/50 px-2 py-1 rounded">
-              <LuMonitor size={12} /> {product.specs.screen}
+              <LuMonitor size={12} /> {formatScreenSize(product.screenSize)}
             </div>
           )}
         </div>
@@ -82,19 +83,28 @@ export default function ProductCard({ product }) {
         {/* Giá và nút hành động */}
         <div className="mt-auto flex items-center justify-between">
           <div>
-            <p className="text-indigo-400 font-bold text-lg">
-              {product.price?.toLocaleString('vi-VN')}đ
-            </p>
-            {product.oldPrice && (
-              <p className="text-neutral-500 text-xs line-through">
-                {product.oldPrice?.toLocaleString('vi-VN')}đ
+            {product.stock === 0 ? (
+              <p className="text-red-500 font-bold text-lg">
+                Hết hàng
               </p>
+            ) : (
+              <>
+                <p className="text-indigo-400 font-bold text-lg">
+                  {product.price?.toLocaleString('vi-VN')}đ
+                </p>
+                {product.oldPrice && (
+                  <p className="text-neutral-500 text-xs line-through">
+                    {product.oldPrice?.toLocaleString('vi-VN')}đ
+                  </p>
+                )}
+              </>
             )}
           </div>
           
           <button 
             onClick={handleAddToCart}
-            className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-lg shadow-indigo-500/20"
+            disabled={product.stock === 0}
+            className="p-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-neutral-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors shadow-lg shadow-indigo-500/20 disabled:shadow-none"
           >
             <LuShoppingCart size={18} />
           </button>

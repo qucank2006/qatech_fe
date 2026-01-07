@@ -20,7 +20,7 @@ const ResetPassword = () => {
     }
 
     try {
-      const res = await api.post("/auth/reset-password", {
+      await api.post("/auth/reset-password", {
         email,
         password
       });

@@ -8,7 +8,6 @@ import {
   LuUsers, 
   LuShoppingCart, 
   LuLogOut, 
-  LuLayers,
   LuUserCog,
   LuArrowLeft
 } from "react-icons/lu";
@@ -29,13 +28,17 @@ const AdminLayout = () => {
     navigate('/login');
   };
 
-  // Danh sách menu admin
-  const menuItems = [
-    { path: '/admin/dashboard', icon: <LuLayoutDashboard size={20} />, label: 'Tổng quan' },
-    { path: '/admin/products', icon: <LuShoppingBag size={20} />, label: 'Sản phẩm' },
-    { path: '/admin/orders', icon: <LuShoppingCart size={20} />, label: 'Đơn hàng' },
-    { path: '/admin/users', icon: <LuUsers size={20} />, label: 'Khách hàng' },
+  // Danh sách menu admin với quyền truy cập
+  const allMenuItems = [
+    { path: '/admin/dashboard', icon: <LuLayoutDashboard size={20} />, label: 'Tổng quan', roles: ['admin', 'employee'] },
+    { path: '/admin/products', icon: <LuShoppingBag size={20} />, label: 'Sản phẩm', roles: ['admin'] },
+    { path: '/admin/orders', icon: <LuShoppingCart size={20} />, label: 'Đơn hàng', roles: ['admin', 'employee'] },
+    { path: '/admin/users', icon: <LuUsers size={20} />, label: 'Khách hàng', roles: ['admin'] },
+    { path: '/admin/staff', icon: <LuUserCog size={20} />, label: 'Nhân sự', roles: ['admin'] },
   ];
+
+  // Lọc menu items dựa trên role
+  const menuItems = allMenuItems.filter(item => item.roles.includes(user?.role));
 
   return (
     <div className="flex h-screen bg-[#0f0f0f] text-white">

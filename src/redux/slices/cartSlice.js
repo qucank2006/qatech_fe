@@ -18,22 +18,27 @@ const cartSlice = createSlice({
     // Thêm sản phẩm vào giỏ hàng
     addToCart: (state, action) => {
       const newItem = action.payload;
-      const existingItem = state.items.find((item) => item.id === newItem.id);
+      const itemId = newItem._id || newItem.id;
+      const existingItem = state.items.find((item) => (item.id || item._id) === itemId);
       
       if (!existingItem) {
         state.items.push({
-          id: newItem.id,
+          id: itemId,
+          _id: itemId,
           name: newItem.name,
           price: newItem.price,
           image: newItem.image,
-          quantity: 1,
-          totalPrice: newItem.price,
+          slug: newItem.slug,
+          stock: newItem.stock,
+          quantity: newItem.quantity || 1,
+          totalPrice: newItem.price * (newItem.quantity || 1),
         });
-        state.totalQuantity++;
+        state.totalQuantity += newItem.quantity || 1;
       } else {
-        existingItem.quantity++;
-        existingItem.totalPrice += newItem.price;
-        state.totalQuantity++;
+        const newQuantity = existingItem.quantity + (newItem.quantity || 1);
+        existingItem.quantity = newQuantity;
+        existingItem.totalPrice = existingItem.price * newQuantity;
+        state.totalQuantity += newItem.quantity || 1;
       }
       
       state.totalAmount = state.items.reduce(
@@ -45,11 +50,11 @@ const cartSlice = createSlice({
     // Xóa sản phẩm khỏi giỏ hàng
     removeFromCart: (state, action) => {
       const id = action.payload;
-      const existingItem = state.items.find((item) => item.id === id);
+      const existingItem = state.items.find((item) => (item.id || item._id) === id);
       
       if (existingItem) {
         state.totalQuantity -= existingItem.quantity;
-        state.items = state.items.filter((item) => item.id !== id);
+        state.items = state.items.filter((item) => (item.id || item._id) !== id);
       }
       
       state.totalAmount = state.items.reduce(
@@ -61,7 +66,7 @@ const cartSlice = createSlice({
     // Cập nhật số lượng sản phẩm
     updateQuantity: (state, action) => {
       const { id, quantity } = action.payload;
-      const existingItem = state.items.find((item) => item.id === id);
+      const existingItem = state.items.find((item) => (item.id || item._id) === id);
       
       if (existingItem && quantity > 0) {
         const quantityDifference = quantity - existingItem.quantity;

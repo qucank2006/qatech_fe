@@ -6,6 +6,14 @@
  */
 export const getImageUrl = (path) => {
   if (!path) return null;
+  
+  // Nếu path là object, lấy thuộc tính url
+  if (typeof path === 'object' && path.url) {
+    path = path.url;
+  }
+  
+  // Đảm bảo path là string
+  if (typeof path !== 'string') return null;
 
   // Chuẩn hóa backslash thành forward slash
   const cleanPath = path.replace(/\\/g, '/');

@@ -1,81 +1,139 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { LuMapPin, LuPhone, LuMail, LuUser, LuCreditCard, LuBanknote, LuCheck } from "react-icons/lu";
 import { getImageUrl } from "../utils/imageUrl";
+import api from '../services/api';
+import { clearCart } from '../redux/slices/cartSlice';
 
 const Checkout = () => {
-  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const dispatch = useDispatch();
+  
+  const [paymentMethod, setPaymentMethod] = useState('vnpay');
+  // eslint-disable-next-line no-unused-vars
+  const [selectedBank, setSelectedBank] = useState(''); // Bank code cho VNPay - sẽ dùng khi thêm UI chọn ngân hàng
   const [isSuccess, setIsSuccess] = useState(false);
-  const [showPaymentQR, setShowPaymentQR] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [orderCode, setOrderCode] = useState('');
+
+  // Form fields state - tự động điền từ thông tin người dùng
+  const [formData, setFormData] = useState({
+    fullName: '',
+    phone: '',
+    email: '',
+    address: '',
+    note: ''
+  });
 
   const { items: cartItems, totalAmount } = useSelector((state) => state.cart);
+  const { user } = useSelector((state) => state.auth);
+
+  // Auto-fill form từ thông tin user khi component mount
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        fullName: user.name || '',
+        phone: user.phone || '',
+        email: user.email || '',
+        address: user.address || '',
+        note: ''
+      });
+    }
+  }, [user]);
 
   const subtotal = totalAmount;
   const shippingFee = 0; // Free shipping
   const total = subtotal + shippingFee;
 
-  // VietQR Config
-  const BANK_ID = "970407";
-  const ACCOUNT_NO = "7090050906";
-  const TEMPLATE = "compact2";
-  const ACCOUNT_NAME = "QATECH";
-  const ORDER_ID = "QA" + Math.floor(Math.random() * 1000000); 
-  const DESCRIPTION = `Thanh toan don hang ${ORDER_ID}`;
-  
-  const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-${TEMPLATE}.png?amount=${total}&addInfo=${encodeURIComponent(DESCRIPTION)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
-
-  const handlePlaceOrder = (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
     
-    if (paymentMethod === 'banking') {
-      setShowPaymentQR(true);
-    } else {
-      // Simulate API call for COD
-      setTimeout(() => {
+    if (cartItems.length === 0) {
+      alert('Giỏ hàng trống!');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      console.log('🛒 Bắt đầu đặt hàng...', {
+        cartItems: cartItems.length,
+        paymentMethod,
+        selectedBank,
+        formData
+      });
+
+      // 1. Tạo đơn hàng
+      const orderPayload = {
+        items: cartItems.map(item => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image
+        })),
+        shippingAddress: {
+          fullName: formData.fullName,
+          phone: formData.phone,
+          address: formData.address
+        },
+        paymentMethod,
+        note: formData.note
+      };
+      
+      console.log('📦 Gửi API tạo đơn hàng:', orderPayload);
+      const orderResponse = await api.post('/orders', orderPayload);
+      console.log('✅ Đơn hàng được tạo:', orderResponse.data);
+
+      const { id: orderId, orderCode } = orderResponse.data.order;
+      setOrderCode(orderCode);
+
+      if (paymentMethod === 'vnpay') {
+        // 2. Tạo thanh toán VNPay
+        console.log('💳 Gửi API tạo thanh toán VNPay:', { orderId, bankCode: selectedBank });
+        const paymentResponse = await api.post('/payments/create', {
+          orderId,
+          bankCode: selectedBank
+        });
+        console.log('✅ Payment URL nhận được:', paymentResponse.data);
+
+        // 3. Lưu orderId vào localStorage (để check sau)
+        localStorage.setItem('pendingOrderId', orderId);
+
+        // 4. Xóa giỏ hàng
+        dispatch(clearCart());
+
+        // 5. Redirect đến VNPay
+        console.log('🔄 Redirect đến VNPay...');
+        window.location.href = paymentResponse.data.paymentUrl;
+      } else {
+        // COD: Chuyển đến trang thành công
+        dispatch(clearCart());
         setIsSuccess(true);
-      }, 1000);
+      }
+    } catch (error) {
+      console.error('❌ Checkout error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      const errorMsg = error.response?.data?.msg || error.message || 'Đặt hàng thất bại. Vui lòng thử lại!';
+      alert(errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleConfirmPayment = () => {
-    setShowPaymentQR(false);
-    setIsSuccess(true);
+  // Handler để cập nhật form data
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
-
-  if (showPaymentQR) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 pt-20">
-        <h2 className="text-3xl font-bold text-white mb-4">Thanh toán đơn hàng</h2>
-        <p className="text-neutral-400 mb-8 max-w-md">
-          Vui lòng quét mã QR bên dưới để hoàn tất thanh toán cho đơn hàng <span className="text-white font-bold">#{ORDER_ID}</span>.
-        </p>
-
-        <div className="mb-8 bg-white p-4 rounded-xl inline-block shadow-lg shadow-indigo-500/20">
-          <img src={qrUrl} alt="VietQR Payment" className="w-[300px] h-auto rounded-lg" />
-          <p className="text-black font-bold mt-3 text-lg">Quét mã để thanh toán</p>
-          <p className="text-neutral-600 text-sm">Techcombank: {ACCOUNT_NO}</p>
-          <p className="text-neutral-600 text-sm">Chủ TK: {ACCOUNT_NAME}</p>
-          <p className="text-indigo-600 font-bold text-lg mt-1">{total.toLocaleString('vi-VN')}đ</p>
-        </div>
-
-        <div className="flex gap-4">
-          <button 
-            onClick={() => setShowPaymentQR(false)}
-            className="bg-neutral-800 hover:bg-neutral-700 text-white px-6 py-3 rounded-xl font-medium transition-colors"
-          >
-            Quay lại
-          </button>
-          <button 
-            onClick={handleConfirmPayment}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-colors"
-          >
-            Đã thanh toán
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   if (isSuccess) {
     return (
@@ -85,7 +143,7 @@ const Checkout = () => {
         </div>
         <h2 className="text-3xl font-bold text-white mb-4">Đặt hàng thành công!</h2>
         <p className="text-neutral-400 mb-8 max-w-md">
-          Cảm ơn bạn đã mua sắm tại QATech. Mã đơn hàng của bạn là <span className="text-white font-bold">#{ORDER_ID}</span>. 
+          Cảm ơn bạn đã mua sắm tại QATech. Mã đơn hàng của bạn là <span className="text-white font-bold">#{orderCode}</span>. 
           Chúng tôi sẽ liên hệ với bạn sớm nhất để xác nhận đơn hàng.
         </p>
 
@@ -130,6 +188,9 @@ const Checkout = () => {
                   <LuUser className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
                   <input 
                     type="text" 
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
                     required
                     placeholder="Nguyễn Văn A"
                     className="w-full bg-neutral-900 border border-neutral-800 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
@@ -143,6 +204,9 @@ const Checkout = () => {
                   <LuPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
                   <input 
                     type="tel" 
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
                     required
                     placeholder="0912 345 678"
                     className="w-full bg-neutral-900 border border-neutral-800 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
@@ -156,6 +220,9 @@ const Checkout = () => {
                   <LuMail className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
                   <input 
                     type="email" 
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     required
                     placeholder="email@example.com"
                     className="w-full bg-neutral-900 border border-neutral-800 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
@@ -164,16 +231,31 @@ const Checkout = () => {
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm text-neutral-400">Địa chỉ nhận hàng</label>
+                <label className="text-sm text-neutral-400">Địa chỉ giao hàng</label>
                 <div className="relative">
                   <LuMapPin className="absolute left-4 top-3 text-neutral-500" />
                   <textarea 
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
                     required
                     rows="3"
                     placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
                     className="w-full bg-neutral-900 border border-neutral-800 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none"
                   ></textarea>
                 </div>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm text-neutral-400">Ghi chú (Tùy chọn)</label>
+                <textarea 
+                  name="note"
+                  value={formData.note}
+                  onChange={handleInputChange}
+                  rows="2"
+                  placeholder="Ghi chú đặc biệt cho đơn hàng..."
+                  className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                ></textarea>
               </div>
             </div>
           </div>
@@ -186,6 +268,30 @@ const Checkout = () => {
             </h2>
 
             <div className="space-y-4">
+              <label 
+                className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all
+                  ${paymentMethod === 'vnpay' 
+                    ? 'bg-indigo-600/10 border-indigo-500' 
+                    : 'bg-neutral-900 border-neutral-800 hover:border-neutral-700'
+                  }`}
+              >
+                <input 
+                  type="radio" 
+                  name="payment" 
+                  value="vnpay"
+                  checked={paymentMethod === 'vnpay'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-5 h-5 text-indigo-600 focus:ring-indigo-500 bg-neutral-800 border-neutral-600"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 font-medium text-white">
+                    <LuCreditCard size={20} />
+                    Thanh toán qua VNPay
+                  </div>
+                  <p className="text-sm text-neutral-400 mt-1">Thanh toán qua thẻ ATM, Internet Banking, QR Code</p>
+                </div>
+              </label>
+
               <label 
                 className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all
                   ${paymentMethod === 'cod' 
@@ -207,30 +313,6 @@ const Checkout = () => {
                     Thanh toán khi nhận hàng (COD)
                   </div>
                   <p className="text-sm text-neutral-400 mt-1">Thanh toán bằng tiền mặt khi shipper giao hàng đến.</p>
-                </div>
-              </label>
-
-              <label 
-                className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all
-                  ${paymentMethod === 'banking' 
-                    ? 'bg-indigo-600/10 border-indigo-500' 
-                    : 'bg-neutral-900 border-neutral-800 hover:border-neutral-700'
-                  }`}
-              >
-                <input 
-                  type="radio" 
-                  name="payment" 
-                  value="banking"
-                  checked={paymentMethod === 'banking'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-5 h-5 text-indigo-600 focus:ring-indigo-500 bg-neutral-800 border-neutral-600"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 font-medium text-white">
-                    <LuCreditCard size={20} />
-                    Chuyển khoản ngân hàng
-                  </div>
-                  <p className="text-sm text-neutral-400 mt-1">Quét mã QR để thanh toán nhanh chóng qua ứng dụng ngân hàng.</p>
                 </div>
               </label>
             </div>
@@ -285,9 +367,10 @@ const Checkout = () => {
 
             <button 
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/20"
+              disabled={loading}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-neutral-700 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/20"
             >
-              Đặt hàng ngay
+              {loading ? 'Đang xử lý...' : 'Đặt hàng ngay'}
             </button>
 
             <p className="text-xs text-neutral-500 text-center mt-4">

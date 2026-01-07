@@ -14,7 +14,7 @@ const VerifyOtp = () => {
     setError(null);
 
     try {
-      const res = await api.post("/auth/verify-otp", { email, otp });
+      await api.post("/auth/verify-otp", { email, otp });
 
       navigate("/reset-password");
     } catch (err) {

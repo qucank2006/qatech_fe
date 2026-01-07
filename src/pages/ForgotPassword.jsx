@@ -18,7 +18,7 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const res = await api.post("/auth/request-otp", { email });
+      await api.post("/auth/request-otp", { email });
 
       setMsg("OTP đã được gửi đến email của bạn");
 
